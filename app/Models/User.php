@@ -1,6 +1,6 @@
 <?php
 
-// Classe responsável pelos dados do usuário
+// Classe responsável pelos dados do usuário.
 class User
 {
     // Método de exemplo
