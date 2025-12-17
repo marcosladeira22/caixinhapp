@@ -24,7 +24,7 @@ spl_autoload_register(function ($class) {
 
             // Se existir, carrega o arquivo
             require_once $file;
-
+            
             // Para a execução da função
             return;
         }
