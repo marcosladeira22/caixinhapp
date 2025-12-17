@@ -1,5 +1,8 @@
 <?php
 
+// Define o namespace da classe
+namespace Core;
+
 // Classe responsável por controlar as rotas do sistema
 class Router
 {
@@ -9,11 +12,10 @@ class Router
         // Captura a URL enviada pelo .htaccess
         // Se não existir, define um padrão
         $url = $_GET['url'] ?? 'home/index';
-
         // Quebra a URL em partes usando /
         // Ex: home/index → ['home', 'index']
         $url = explode('/', $url);
-
+        
         // Define o nome do controller
         // ucfirst deixa a primeira letra maiúscula
         // home → HomeController
@@ -23,26 +25,23 @@ class Router
         // Se não existir, usa "index"
         $method = $url[1] ?? 'index';
 
-        // Caminho físico do controller
-        $controllerFile = "../app/Controllers/$controllerName.php";
+        // Monta o namespace completo do controller
+        $controllerClass = "App\\Controllers\\$controllerName";
 
-        // Verifica se o arquivo do controller existe
-        if (!file_exists($controllerFile)) {
+        // Verifica se a classe existe
+        if (!class_exists($controllerClass)) {
             die("Controller não encontrado.");
         }
 
-        // Inclui o controller
-        require_once $controllerFile;
+        // Cria o controller
+        $controller = new $controllerClass();
 
-        // Cria uma instância do controller
-        $controller = new $controllerName();
-
-        // Verifica se o método existe dentro do controller
+        // Verifica se o método existe
         if (!method_exists($controller, $method)) {
             die("Método não encontrado.");
         }
 
-        // Executa o método do controller
+        // Executa o método
         $controller->$method();
     }
 }

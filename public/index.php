@@ -1,14 +1,17 @@
 <?php
-// Define que erros devem ser exibidos (bom para estudo)
+
+// Exibe erros (modo estudo)
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// Importa o arquivo responsável pelas rotas
-// Ele decide qual controller será chamado
-require_once "../core/Router.php";
+// Carrega o autoload
+require_once "../autoload.php";
 
-// Cria um novo objeto Router
+// Usa a classe Router
+use Core\Router;
+
+// Inicia o sistema
 $router = new Router();
 
-// Executa o sistema de rotas
+//Executa o Sistema de rotas
 $router->run();

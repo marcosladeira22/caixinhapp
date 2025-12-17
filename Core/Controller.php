@@ -1,5 +1,8 @@
 <?php
 
+// Define o namespace da classe
+namespace Core;
+
 // Classe base para todos os controllers
 class Controller
 {
@@ -11,6 +14,6 @@ class Controller
         extract($data);
 
         // Inclui o arquivo da view
-        require_once "../app/Views/$view.php";
+        require "../App/Views/$view.php";
     }
 }

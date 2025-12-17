@@ -1,7 +1,10 @@
 <?php
 
+// Define o namespace da classe
+namespace App\Controllers;
+
 // Importa o controller base
-require_once "../core/Controller.php";
+use Core\Controller;
 
 // Cria o controller Home
 class HomeController extends Controller

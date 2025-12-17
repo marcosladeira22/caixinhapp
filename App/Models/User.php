@@ -1,5 +1,8 @@
 <?php
 
+// Define o namespace da classe
+namespace App\Models;
+
 // Classe responsável pelos dados do usuário.
 class User
 {
