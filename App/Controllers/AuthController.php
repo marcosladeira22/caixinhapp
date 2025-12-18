@@ -20,35 +20,57 @@ class AuthController extends Controller
     // Processa o login (POST)
     public function login()
     {
-        // Verifica se os dados vieram do formulário
-        if (!isset($_POST['email'], $_POST['password'])) {
-            
-            // Mensagem de erro (acesso inválido)
-            $this->setFlash('error', 'Acesso inválido.');
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDAÇÃO DOS CAMPOS OBRIGATÓRIOS
+        |--------------------------------------------------------------------------
+        | Verifica se email e senha foram preenchidos
+        */
 
-            // Volta para o login
+        $errors = $this->validateRequired([
+            'email'    => 'Email',
+            'password' => 'Senha'
+        ]);
+
+        // Se existir erro de validação
+        if (!empty($errors)) {
+
+            // Salva mensagem de erro na sessão
+            $this->setFlash('error', implode('<br>', $errors));
+
+            // Volta para a tela de login
             $this->redirect('/auth/index');
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | AUTENTICAÇÃO
+        |--------------------------------------------------------------------------
+        */
 
         // Instancia o model User
         $user = new User();
 
-        // Busca usuário pelo e-mail
+        // Busca o usuário pelo email informado
         $data = $user->findByEmail($_POST['email']);
 
-        // Se usuário NÃO existe ou senha está incorreta
+        // Se usuário não existir ou senha estiver incorreta
         if (!$data || !password_verify($_POST['password'], $data['password'])) {
 
-            // Mensagem de erro de autenticação
+            // Mensagem de erro
             $this->setFlash('error', 'Email ou senha inválidos.');
 
             // Volta para o login
             $this->redirect('/auth/index');
         }
 
-        // Se chegou aqui, login é válido
+        /*
+        |--------------------------------------------------------------------------
+        | LOGIN BEM-SUCEDIDO
+        |--------------------------------------------------------------------------
+        */
 
-        // Salva dados básicos do usuário na sessão
+        // Salva dados do usuário na sessão
         $_SESSION['user'] = [
             'id'    => $data['id'],
             'name'  => $data['name'],
@@ -58,9 +80,10 @@ class AuthController extends Controller
         // Mensagem de sucesso
         $this->setFlash('success', 'Bem-vindo, ' . $data['name'] . '!');
 
-        // Redireciona para lista de usuários
+        // Redireciona para a área protegida
         $this->redirect('/user/index');
     }
+
 
     // Faz logout
     public function logout()

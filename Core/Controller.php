@@ -71,4 +71,26 @@ class Controller
         }
         return null;
     }
+
+    // Valida campos obrigatórios de um formulário
+    protected function validateRequired(array $fields)
+    {
+        // Array para armazenar mensagens de erro
+        $errors = [];
+
+        // Percorre cada campo obrigatório
+        foreach ($fields as $field => $label) {
+
+            // Se o campo não existir ou estiver vazio
+            if (!isset($_POST[$field]) || trim($_POST[$field]) === '') {
+
+                // Adiciona a mensagem de erro
+                $errors[] = "O campo {$label} é obrigatório.";
+            }
+        }
+
+        // Retorna o array de erros (vazio se não houver erros)
+        return $errors;
+    }
+
 }

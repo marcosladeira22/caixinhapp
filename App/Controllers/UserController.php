@@ -41,17 +41,40 @@ class UserController extends Controller
     // CREATE — salva no banco
     public function store()
     {
+        // Define os campos obrigatórios e seus nomes amigáveis
+        $errors = $this->validateRequired([
+            'name'     => 'Nome',
+            'email'    => 'Email',
+            'password' => 'Senha'
+        ]);
+
+        // Se existir qualquer erro de validação
+        if (!empty($errors)) {
+
+            // Salva os erros na sessão como flash message
+            $this->setFlash('error', implode('<br>', $errors));
+
+            // Volta para o formulário de cadastro
+            $this->redirect('/user/create');
+        }
+
+        // Gera o hash seguro da senha
         $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
+        // Salva o usuário no banco
         $this->user->create(
             $_POST['name'],
             $_POST['email'],
             $password
         );
 
-        //Redirecionamento
+        // Mensagem de sucesso
+        $this->setFlash('success', 'Usuário cadastrado com sucesso.');
+
+        // Redireciona para a listagem
         $this->redirect('/user/index');
     }
+
 
     // UPDATE — formulário
     public function edit($id)
