@@ -49,14 +49,39 @@ class Router
         }
 
         // Cria o controller
-        $controller = new $controllerClass();
+    $controller = new $controllerClass();
 
-        // Verifica se o método existe
-        if (!method_exists($controller, $method)) {
-            die("Método não encontrado.");
+    /*
+    |--------------------------------------------------------------------------
+    | MIDDLEWARE SIMPLES DE AUTENTICAÇÃO
+    |--------------------------------------------------------------------------
+    | Aqui decidimos se a rota precisa de login
+    */
+
+    // Lista de controllers que NÃO exigem autenticação
+    $publicControllers = [
+        'AuthController'
+    ];
+
+    // Se o controller atual NÃO for público
+    if (!in_array($controllerName, $publicControllers)) {
+
+        // Se o usuário NÃO estiver logado
+        if (!isset($_SESSION['user'])) {
+
+            // Redireciona para a tela de login
+            header('Location: /caixinhapp/public/auth/index');
+            exit;
         }
+    }
 
-        // Chama o método passando os parâmetros
-        call_user_func_array([$controller, $method], $params);
+    // Verifica se o método existe no controller
+    if (!method_exists($controller, $method)) {
+        die("Método não encontrado.");
+    }
+
+    // Executa o método do controller com os parâmetros
+    call_user_func_array([$controller, $method], $params);
+
     }
 }

@@ -15,9 +15,6 @@ class UserController extends Controller
         // Construtor do Controller base
         parent::__construct();
 
-        // Verifica se o usuário está logado
-        $this->auth();
-
         // Instancia o model User
         $this->user = new User();
     }
