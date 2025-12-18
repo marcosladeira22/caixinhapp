@@ -8,7 +8,7 @@ use PDO;
 // Classe responsável pelos dados do usuário.
 class User
 {
-    // Guarda a conexão
+    // Conexão com o banco
     private $db;
 
     public function __construct()
@@ -18,16 +18,19 @@ class User
     }
 
     // CREATE — insere usuário
-    public function create($name, $email)
+    public function create($name, $email, $password)
     {
-        $stmt = $this->db->prepare(
-            "INSERT INTO users (name, email) VALUES (:name, :email)"
-        );
+        // SQL para inserir usuário
+        $sql = "INSERT INTO users (name, email, password) VALUES (:name, :email, :password)";
+        
+        // Prepara a query (proteção contra SQL Injection)
+        $stmt = $this->db->prepare($sql);
 
-        return $stmt->execute([
-            'name'  => $name,
-            'email' => $email
-        ]);
+        // Executa a query com dados seguros
+        $stmt->bindValue(':name', $name);
+        $stmt->bindValue(':email', $email);
+        $stmt->bindValue(':password', $password);
+        $stmt->execute();
     }
 
     // READ — lista todos
@@ -71,4 +74,14 @@ class User
 
         return $stmt->execute(['id' => $id]);
     }
+
+    public function findByEmail($email)
+{
+    $sql = "SELECT * FROM users WHERE email = :email LIMIT 1";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(':email', $email);
+    $stmt->execute();
+
+    return $stmt->fetch();
+}
 }

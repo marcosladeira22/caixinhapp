@@ -1,17 +1,18 @@
 <?php
 
-// Exibe erros (modo estudo)
+// Mostrar erros (apenas em desenvolvimento)
 ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Carrega o autoload
-require_once "../autoload.php";
+// Inicia sessão (login usa isso)
+session_start();
 
-// Usa a classe Router
-use Core\Router;
+// Autoload REAL do projeto
+require_once __DIR__ . '/../autoload.php';
 
-// Inicia o sistema
-$router = new Router();
+// Inicia o Router
+$router = new Core\Router();
 
-//Executa o Sistema de rotas
+// Executa o roteamento
 $router->run();

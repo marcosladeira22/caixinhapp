@@ -12,9 +12,13 @@ class UserController extends Controller
 
     public function __construct()
     {
+        // Construtor do Controller base
         parent::__construct();
-        
-        // Instancia o model
+
+        // Verifica se o usuário está logado
+        $this->auth();
+
+        // Instancia o model User
         $this->user = new User();
     }
 
@@ -40,9 +44,12 @@ class UserController extends Controller
     // CREATE — salva no banco
     public function store()
     {
+        $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+
         $this->user->create(
             $_POST['name'],
-            $_POST['email']
+            $_POST['email'],
+            $password
         );
 
         //Redirecionamento

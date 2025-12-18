@@ -6,11 +6,12 @@ namespace Core;
 // Classe base para todos os controllers
 class Controller
 {
+    // Armazena a URL base do projeto
     protected $base_url;
 
     public function __construct()
     {
-        // Carrega config
+        // Carrega as configurações do app
         $config = require __DIR__ . '/../config/app.php';
 
         // Disponibiliza base_url para o controller
@@ -27,20 +28,30 @@ class Controller
         // ['title' => 'Exemplo'] vira $title
         extract($data);
 
-        // Header
+        // Inclui o header padrão
         require __DIR__ . "/../App/Views/layouts/header.php";
 
-        // Conteúdo da view
+        // Inclui a view específica
         require __DIR__ . "/../App/Views/$view.php";
 
-        // Footer
+        // Inclui o footer padrão
         require __DIR__ . "/../App/Views/layouts/footer.php";
     }
 
-    // 🔴 NOVO: método padrão de redirecionamento
+    //método padrão de redirecionamento
     protected function redirect($path)
     {
+        // Redireciona para a URL correta do projeto
         header("Location: {$this->base_url}{$path}");
         exit;
+    }
+
+    protected function auth()
+    {
+        // Verifica se o usuário está logado
+        if (!isset($_SESSION['user'])) {
+            // Se não estiver, redireciona para login
+            $this->redirect('/login');
+        }
     }
 }
