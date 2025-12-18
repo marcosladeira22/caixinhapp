@@ -12,10 +12,22 @@ class Router
         // Captura a URL enviada pelo .htaccess
         // Se não existir, define um padrão
         $url = $_GET['url'] ?? 'home/index';
+
+        // Remove possíveis barras extras
+        $url = trim($url, '/');
+        
         // Quebra a URL em partes usando /
         // Ex: home/index → ['home', 'index']
         $url = explode('/', $url);
         
+        /*
+         * Se a URL começar com "public",
+         * removemos essa parte automaticamente
+         */
+        if ($url[0] === 'public') {
+            array_shift($url);
+        }
+
         // Define o nome do controller
         // ucfirst deixa a primeira letra maiúscula
         // home → HomeController
@@ -24,6 +36,9 @@ class Router
         // Define o método (ação)
         // Se não existir, usa "index"
         $method = $url[1] ?? 'index';
+
+        // Parâmetros extras da URL
+        $params = array_slice($url, 2);
 
         // Monta o namespace completo do controller
         $controllerClass = "App\\Controllers\\$controllerName";
@@ -41,7 +56,7 @@ class Router
             die("Método não encontrado.");
         }
 
-        // Executa o método
-        $controller->$method();
+        // Chama o método passando os parâmetros
+        call_user_func_array([$controller, $method], $params);
     }
 }

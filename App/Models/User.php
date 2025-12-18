@@ -17,16 +17,58 @@ class User
         $this->db = Database::getConnection();
     }
 
-    // Busca todos os usuários
+    // CREATE — insere usuário
+    public function create($name, $email)
+    {
+        $stmt = $this->db->prepare(
+            "INSERT INTO users (name, email) VALUES (:name, :email)"
+        );
+
+        return $stmt->execute([
+            'name'  => $name,
+            'email' => $email
+        ]);
+    }
+
+    // READ — lista todos
     public function getAll()
     {
-        // Prepara a query
-        $stmt = $this->db->prepare("SELECT * FROM users");
-
-        // Executa a query
-        $stmt->execute();
-
-        // Retorna os dados como array
+        $stmt = $this->db->query("SELECT * FROM users");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // READ — busca um usuário
+    public function find($id)
+    {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM users WHERE id = :id"
+        );
+
+        $stmt->execute(['id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // UPDATE — atualiza usuário
+    public function update($id, $name, $email)
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE users SET name = :name, email = :email WHERE id = :id"
+        );
+
+        return $stmt->execute([
+            'id'    => $id,
+            'name'  => $name,
+            'email' => $email
+        ]);
+    }
+
+    // DELETE — remove usuário
+    public function delete($id)
+    {
+        $stmt = $this->db->prepare(
+            "DELETE FROM users WHERE id = :id"
+        );
+
+        return $stmt->execute(['id' => $id]);
     }
 }
