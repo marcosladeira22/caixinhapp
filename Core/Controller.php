@@ -27,8 +27,14 @@ class Controller
         // ['title' => 'Exemplo'] vira $title
         extract($data);
 
-        // Inclui o arquivo da view
+        // Header
+        require __DIR__ . "/../App/Views/layouts/header.php";
+
+        // Conteúdo da view
         require __DIR__ . "/../App/Views/$view.php";
+
+        // Footer
+        require __DIR__ . "/../App/Views/layouts/footer.php";
     }
 
     // 🔴 NOVO: método padrão de redirecionamento
