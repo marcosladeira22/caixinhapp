@@ -54,4 +54,21 @@ class Controller
             $this->redirect('/login');
         }
     }
+
+    // Define uma mensagem temporária (flash)
+    protected function setFlash($key, $message)
+    {
+        $_SESSION['flash'][$key] = $message;
+    }
+
+    // Recupera e apaga a mensagem flash
+    protected function getFlash($key)
+    {
+        if (isset($_SESSION['flash'][$key])) {
+            $message = $_SESSION['flash'][$key];
+            unset($_SESSION['flash'][$key]);
+            return $message;
+        }
+        return null;
+    }
 }

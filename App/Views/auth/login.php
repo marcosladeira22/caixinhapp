@@ -8,6 +8,14 @@
 
 <h2>Login</h2>
 
+<?php if ($error = $this->getFlash('error')): ?>
+    <p style="color:red"><?= $error ?></p>
+<?php endif; ?>
+
+<?php if ($success = $this->getFlash('success')): ?>
+    <p style="color:green"><?= $success ?></p>
+<?php endif; ?>
+
 <form method="POST" action="/caixinhapp/public/auth/login">
     <label>Email</label><br>
     <input type="email" name="email" required><br><br>
