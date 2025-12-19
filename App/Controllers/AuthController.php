@@ -20,6 +20,16 @@ class AuthController extends Controller
     // Processa o login (POST)
     public function login()
     {
+        // Valida o token CSRF
+        if (!$this->validateCsrf()) {
+
+            // Mensagem de erro
+            $this->setFlash('error', 'Token inválido. Tente novamente.');
+
+            // Volta para o login
+            $this->redirect('/auth/index');
+        }
+        
         /*
         |--------------------------------------------------------------------------
         | VALIDAÇÃO DOS CAMPOS OBRIGATÓRIOS

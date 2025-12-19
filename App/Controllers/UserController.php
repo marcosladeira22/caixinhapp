@@ -41,6 +41,16 @@ class UserController extends Controller
     // CREATE — salva no banco
     public function store()
     {
+        // Valida o token CSRF
+        if (!$this->validateCsrf()) {
+
+            // Mensagem de erro
+            $this->setFlash('error', 'Token inválido. Recarregue o formulário.');
+
+            // Volta para o formulário
+            $this->redirect('/user/create');
+        }
+
         // Define os campos obrigatórios e seus nomes amigáveis
         $errors = $this->validateRequired([
             'name'     => 'Nome',

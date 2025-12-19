@@ -17,6 +17,8 @@
 <?php endif; ?>
 
 <form method="POST" action="/caixinhapp/public/auth/login">
+    <input type="hidden" name="csrf_token" value="<?= $this->csrfToken() ?>">
+    
     <label>Email</label><br>
     <input type="email" name="email" required><br><br>
 

@@ -93,4 +93,36 @@ class Controller
         return $errors;
     }
 
+    // Gera ou retorna o token CSRF da sessão
+    protected function csrfToken()
+    {
+        // Se ainda não existir um token na sessão
+        if (!isset($_SESSION['csrf_token'])) {
+
+            // Gera um token aleatório e seguro
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        // Retorna o token
+        return $_SESSION['csrf_token'];
+    }
+
+    // Valida o token CSRF enviado pelo formulário
+    protected function validateCsrf()
+    {
+        // Se o token não existir no POST ou na sessão
+        if (
+            !isset($_POST['csrf_token']) ||
+            !isset($_SESSION['csrf_token'])
+        ) {
+            return false;
+        }
+
+        // Compara os tokens de forma segura
+        return hash_equals(
+            $_SESSION['csrf_token'],
+            $_POST['csrf_token']
+        );
+    }
+
 }
