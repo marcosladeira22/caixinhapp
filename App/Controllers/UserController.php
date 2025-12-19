@@ -22,55 +22,65 @@ class UserController extends Controller
     // READ — lista usuários
     public function index()
     {
-        // Quantidade de registros por página
+        // Quantidade por página
         $limit = 5;
 
-        // Página atual (vinda da URL)
+        // Página atual
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-
-        // Garante que a página mínima seja 1
         if ($page < 1) {
             $page = 1;
         }
 
-        // Calcula o OFFSET
+        // Offset
         $offset = ($page - 1) * $limit;
 
-        // Termo de busca (se existir)
-        $search = $_GET['search'] ?? null;
+        // Busca (sempre string)
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-        // Se houver termo de busca
-        if (!empty($search)) {
+        // Ordenação
+        $order = $_GET['order'] ?? 'id';
+        $dir   = $_GET['dir'] ?? 'desc';
 
-            // Busca usuários com filtro
-            $users = $this->user->searchPaginated($search, $limit, $offset);
+        // Com busca
+        if ($search !== '') {
 
-            // Conta resultados do filtro
+            $users = $this->user->searchPaginatedOrdered(
+                $search,
+                $order,
+                $dir,
+                $limit,
+                $offset
+            );
+
             $total = $this->user->countSearch($search);
 
         } else {
 
-            // Busca usuários sem filtro
-            $users = $this->user->getPaginated($limit, $offset);
+            $users = $this->user->getPaginatedOrdered(
+                $order,
+                $dir,
+                $limit,
+                $offset
+            );
 
-            // Conta total geral
             $total = $this->user->countAll();
         }
 
-        // Calcula total de páginas
+        // Total de páginas
         $totalPages = ceil($total / $limit);
 
-        // Envia dados para a view
+        // View
         $this->view('users/index', [
             'title'      => 'Usuários',
             'users'      => $users,
             'page'       => $page,
             'totalPages' => $totalPages,
-            'search'     => $search
+            'search'     => $search,
+            'order'      => $order,
+            'dir'        => $dir
         ]);
-
-        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     }
+
 
     // CREATE — formulário
     public function create()

@@ -9,6 +9,17 @@
     >
     <button type="submit">Buscar</button>
 </form>
+<br>
+<th>
+    <a href="<?= $base_url ?>/user/index?search=<?= urlencode($search) ?>&order=name&dir=<?= ($order === 'name' && $dir === 'asc') ? 'desc' : 'asc' ?>">
+        Nome ↓&nbsp;
+    </a>
+</th>
+<th>
+    <a href="<?= $base_url ?>/user/index?search=<?= urlencode($search) ?>&order=email&dir=<?= ($order === 'email' && $dir === 'asc') ? 'desc' : 'asc' ?>">
+        Email ↓
+    </a>
+</th>
 <ul>
     <?php foreach ($users as $user): ?>
         <li>
@@ -16,6 +27,7 @@
             <?php if ($this->hasRole(['admin', 'manager'])): ?>
                 <a href="<?= $base_url ?>/user/edit/<?= $user['id']; ?>">Editar</a>
             <?php endif; ?>
+            &nbsp;|&nbsp;
             <?php if ($this->hasRole(['admin'])): ?>
                 <a href="<?= $base_url ?>/user/delete/<?= $user['id']; ?>"
                 onclick="return confirm('Excluir usuário?')">Excluir
@@ -40,7 +52,7 @@
 
         <!-- Botão Anterior -->
         <?php if ($page > 1): ?>
-            <a href="<?= $base_url ?>/user/index?page=<?= $page - 1 ?>&search=<?= urlencode($search ?? '') ?>">
+            <a href="<?= $base_url ?>/user/index?page=<?= $page - 1 ?>&search=<?= urlencode($search ?? '') ?>&order=<?= $order ?>&dir=<?= $dir ?>">
                 ← Anterior
             </a>
         <?php endif; ?>
@@ -50,7 +62,7 @@
 
         <!-- Botão Próxima -->
         <?php if ($page < $totalPages): ?>
-            <a href="<?= $base_url ?>/user/index?page=<?= $page + 1 ?>&search=<?= urlencode($search ?? '') ?>">
+            <a href="<?= $base_url ?>/user/index?page=<?= $page + 1 ?>&search=<?= urlencode($search ?? '') ?>&order=<?= $order ?>&dir=<?= $dir ?>">
                 Próxima →
             </a>
         <?php endif; ?>

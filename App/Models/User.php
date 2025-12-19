@@ -202,4 +202,86 @@ class User
         return $stmt->fetch()['total'];
     }
 
+    // Busca usuários com filtro, ordenação e paginação
+    public function searchPaginatedOrdered($search, $order, $dir, $limit, $offset)
+    {
+        // Colunas permitidas (SEGURANÇA contra SQL Injection)
+        $allowedOrders = ['id', 'name', 'email'];
+
+        // Direções permitidas
+        $allowedDir = ['asc', 'desc'];
+
+        // Valida coluna de ordenação
+        if (!in_array($order, $allowedOrders)) {
+            $order = 'id';
+        }
+
+        // Valida direção
+        if (!in_array($dir, $allowedDir)) {
+            $dir = 'desc';
+        }
+
+        // SQL com filtro e ordenação
+        $sql = "
+            SELECT *
+            FROM users
+            WHERE name LIKE :search
+            OR email LIKE :search
+            ORDER BY $order $dir
+            LIMIT :limit OFFSET :offset
+        ";
+
+        // Prepara a query
+        $stmt = $this->db->prepare($sql);
+
+        // Termo de busca
+        $stmt->bindValue(':search', '%' . $search . '%');
+
+        // Paginação
+        $stmt->bindValue(':limit', (int) $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, \PDO::PARAM_INT);
+
+        // Executa
+        $stmt->execute();
+
+        // Retorna os usuários
+        return $stmt->fetchAll();
+    }
+
+    // Busca usuários com ordenação e paginação (sem filtro)
+    public function getPaginatedOrdered($order, $dir, $limit, $offset)
+    {
+        // Colunas permitidas
+        $allowedOrders = ['id', 'name', 'email'];
+        $allowedDir = ['asc', 'desc'];
+
+        // Valida
+        if (!in_array($order, $allowedOrders)) {
+            $order = 'id';
+        }
+
+        if (!in_array($dir, $allowedDir)) {
+            $dir = 'desc';
+        }
+
+        // SQL
+        $sql = "
+            SELECT *
+            FROM users
+            ORDER BY $order $dir
+            LIMIT :limit OFFSET :offset
+        ";
+
+        // Prepara
+        $stmt = $this->db->prepare($sql);
+
+        $stmt->bindValue(':limit', (int) $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, \PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+
 }
