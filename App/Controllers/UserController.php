@@ -34,7 +34,7 @@ class UserController extends Controller
     public function create()
     {
         // Verifica se é administrador
-        if (!$this->isAdmin()) {
+        if (!$this->hasRole(['admin', 'manager'])) {
 
             // Mensagem de erro
             $this->setFlash('error', 'Acesso negado.');
@@ -52,7 +52,7 @@ class UserController extends Controller
     public function store()
     {
         // Verifica se é administrador
-        if (!$this->isAdmin()) {
+        if (!$this->hasRole(['admin', 'manager'])) {
 
             // Mensagem de erro
             $this->setFlash('error', 'Acesso negado.');
@@ -120,7 +120,7 @@ class UserController extends Controller
     public function edit($id)
     {
         // Verifica se é administrador
-        if (!$this->isAdmin()) {
+        if (!$this->hasRole(['admin', 'manager'])) {
 
             // Mensagem de erro
             $this->setFlash('error', 'Acesso negado.');
@@ -141,7 +141,7 @@ class UserController extends Controller
     public function update($id)
     {
         // Verifica se é administrador
-        if (!$this->isAdmin()) {
+        if (!$this->hasRole(['admin', 'manager'])) {
 
             // Mensagem de erro
             $this->setFlash('error', 'Acesso negado.');
@@ -161,10 +161,10 @@ class UserController extends Controller
     }
 
     // DELETE — remove
-    public function delete($id)
+        public function delete($id)
     {
-        // Verifica se é administrador
-        if (!$this->isAdmin()) {
+        // 1️ Verifica se o usuário logado é admin ou manager
+        if (!$this->hasRole(['admin', 'manager'])) {
 
             // Mensagem de erro
             $this->setFlash('error', 'Acesso negado.');
@@ -173,13 +173,45 @@ class UserController extends Controller
             $this->redirect('/user/index');
         }
 
-        // Remove usuário
+        // 2️ Busca o usuário que será excluído
+        $userToDelete = $this->user->find($id);
+
+        // 3️ Se o usuário não existir
+        if (!$userToDelete) {
+
+            $this->setFlash('error', 'Usuário não encontrado.');
+            $this->redirect('/user/index');
+        }
+
+        // 4️ Se quem está logado for manager
+        //     e o usuário alvo for admin
+        if (
+            $this->hasRole(['manager']) &&
+            $userToDelete['role'] === 'admin'
+        ) {
+            // Bloqueia a ação
+            $this->setFlash(
+                'error',
+                'Gerentes não podem excluir administradores.'
+            );
+
+            $this->redirect('/user/index');
+        }
+
+        // 5️ Se passou por todas as regras, pode excluir
         $this->user->delete($id);
 
-        // Mensagem de sucesso
-        $this->setFlash('success', 'Usuário removido.');
+        // 6️ Registra log da exclusão
+        $this->log(
+            'delete_user',
+            "Usuário excluiu o cadastro ID {$id}"
+        );
 
-        // Redireciona
+        // 7️ Mensagem de sucesso
+        $this->setFlash('success', 'Usuário excluído com sucesso.');
+
+        // 8️ Redireciona
         $this->redirect('/user/index');
     }
+
 }

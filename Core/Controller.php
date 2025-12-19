@@ -142,13 +142,36 @@ class Controller
     // Verifica se o usuário é administrador
     protected function isAdmin()
     {
-        // Verifica se existe usuário logado
+        // Usa o método genérico de roles
+        return $this->hasRole(['admin']);
+    }
+
+    // Retorna o role do usuário logado
+    protected function userRole()
+    {
+        // Se não existir usuário logado
         if (!isset($_SESSION['user'])) {
+            return null;
+        }
+
+        // Retorna o nível do usuário
+        return $_SESSION['user']['role'];
+    }
+
+    // Verifica se o usuário possui um dos níveis permitidos
+    protected function hasRole(array $roles)
+    {
+        // Obtém o role do usuário
+        $userRole = $this->userRole();
+
+        // Se não estiver logado
+        if (!$userRole) {
             return false;
         }
 
-        // Retorna true se o nível for admin
-        return $_SESSION['user']['role'] === 'admin';
+        // Retorna true se o role estiver na lista permitida
+        return in_array($userRole, $roles);
     }
+
 
 }
