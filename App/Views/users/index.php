@@ -24,12 +24,23 @@
         </li>
     <?php endforeach; ?>
     <br>
+    <?php if (empty($users)): ?>
+        <div class="alert">
+            <?php if (!empty($search)): ?>
+                Nenhum resultado encontrado para
+                <strong><?= htmlspecialchars($search) ?></strong>
+            <?php else: ?>
+                Nenhum usuário cadastrado.
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
     <!-- PAGINAÇÃO -->
     <div class="pagination">
 
         <!-- Botão Anterior -->
         <?php if ($page > 1): ?>
-            <a href="<?= $base_url ?>/user/index?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>">
+            <a href="<?= $base_url ?>/user/index?page=<?= $page - 1 ?>&search=<?= urlencode($search ?? '') ?>">
                 ← Anterior
             </a>
         <?php endif; ?>
@@ -39,7 +50,7 @@
 
         <!-- Botão Próxima -->
         <?php if ($page < $totalPages): ?>
-            <a href="<?= $base_url ?>/user/index?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>">
+            <a href="<?= $base_url ?>/user/index?page=<?= $page + 1 ?>&search=<?= urlencode($search ?? '') ?>">
                 Próxima →
             </a>
         <?php endif; ?>

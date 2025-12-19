@@ -68,6 +68,8 @@ class UserController extends Controller
             'totalPages' => $totalPages,
             'search'     => $search
         ]);
+
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     }
 
     // CREATE — formulário
