@@ -18,17 +18,11 @@ class HomeController extends Controller
 
         // Busca usuários no banco
         $users = $userModel->getAll();
-
-         // Envia os dados para a view
-        $this->view('home', [
-            'title' => 'Usuários cadastrados',
-            'users' => $users
-        ]);
         
         // Chama a view "home"
         // Envia dados para a view
-        //$this->view('home', [
-        //    'title' => 'Meu primeiro MVC em PHP'
-        //]);
+        $this->view('home', [
+            'title' => 'Meu primeiro MVC em PHP'
+        ]);
     }
 }

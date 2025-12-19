@@ -2,6 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <!-- CSS GLOBAL DO SISTEMA -->
+    <link rel="stylesheet" href="<?= $base_url ?>/css/style.css">
     <title><?= $title ?? 'Sistema' ?></title>
 </head>
 <body>
