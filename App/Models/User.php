@@ -108,4 +108,43 @@ class User
         return $stmt->fetch() ? true : false;
     }
 
+    // Retorna usuários paginados
+    public function getPaginated($limit, $offset)
+    {
+        // SQL com LIMIT e OFFSET
+        $sql = "
+            SELECT *
+            FROM users
+            ORDER BY id DESC
+            LIMIT :limit OFFSET :offset
+        ";
+
+        // Prepara a query
+        $stmt = $this->db->prepare($sql);
+
+        // LIMIT e OFFSET precisam ser inteiros
+        $stmt->bindValue(':limit', (int) $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, \PDO::PARAM_INT);
+
+        // Executa
+        $stmt->execute();
+
+        // Retorna todos os registros
+        return $stmt->fetchAll();
+    }
+
+
+    // Retorna o total de usuários
+    public function countAll()
+    {
+        // SQL para contar registros
+        $sql = "SELECT COUNT(*) AS total FROM users";
+
+        // Executa a query
+        $stmt = $this->db->query($sql);
+
+        // Retorna o total
+        return $stmt->fetch()['total'];
+    }
+
 }

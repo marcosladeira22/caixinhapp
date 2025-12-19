@@ -22,13 +22,38 @@ class UserController extends Controller
     // READ — lista usuários
     public function index()
     {
-        $users = $this->user->getAll();
+        // Quantidade de registros por página
+        $limit = 5;
 
+        // Página atual (vinda da URL)
+        $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+
+        // Garante que a página mínima seja 1
+        if ($page < 1) {
+            $page = 1;
+        }
+
+        // Calcula o OFFSET
+        $offset = ($page - 1) * $limit;
+
+        // Busca usuários paginados
+        $users = $this->user->getPaginated($limit, $offset);
+
+        // Total de usuários
+        $total = $this->user->countAll();
+
+        // Calcula total de páginas
+        $totalPages = ceil($total / $limit);
+
+        // Envia dados para a view
         $this->view('users/index', [
-            'title' => 'Usuários',
-            'users' => $users
+            'title'      => 'Usuários',
+            'users'      => $users,
+            'page'       => $page,
+            'totalPages' => $totalPages
         ]);
     }
+
 
     // CREATE — formulário
     public function create()
