@@ -88,6 +88,9 @@ class AuthController extends Controller
             'role'  => $data['role']
         ];
 
+        // Registra log de login
+        $this->log('login', 'Usuário realizou login no sistema');
+
         // Mensagem de sucesso
         $this->setFlash('success', 'Bem-vindo, ' . $data['name'] . '!');
 
@@ -99,6 +102,8 @@ class AuthController extends Controller
     // Faz logout
     public function logout()
     {
+        $this->log('logout','Usuário saiu do sistema');
+        
         // Remove dados do usuário da sessão
         unset($_SESSION['user']);
 

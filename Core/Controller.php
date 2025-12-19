@@ -173,5 +173,24 @@ class Controller
         return in_array($userRole, $roles);
     }
 
+    // Registra uma ação no sistema
+    protected function log($action, $description = null)
+    {
+        // Verifica se existe usuário logado
+        if (!isset($_SESSION['user'])) {
+            return;
+        }
+
+        // Instancia o model de log
+        $log = new \App\Models\Log();
+
+        // Cria o registro
+        $log->create(
+            $_SESSION['user']['id'],   // usuário logado
+            $action,                  // ação executada
+            $description             // descrição opcional
+        );
+    }
+
 
 }

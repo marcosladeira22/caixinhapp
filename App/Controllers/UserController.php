@@ -109,6 +109,9 @@ class UserController extends Controller
             $password
         );
 
+        // Log de criação
+        $this->log('create_user', 'Usuário criou um novo cadastro');
+        
         // 9️ - Mensagem de sucesso
         $this->setFlash('success', 'Usuário cadastrado com sucesso.');
 
@@ -156,6 +159,9 @@ class UserController extends Controller
             $_POST['email']
         );
 
+        // Log de edição
+        $this->log('update_user', "Usuário editou o cadastro ID {$id}");
+
         //Redirecionamento
         $this->redirect('/user/index');
     }
@@ -202,10 +208,7 @@ class UserController extends Controller
         $this->user->delete($id);
 
         // 6️ Registra log da exclusão
-        $this->log(
-            'delete_user',
-            "Usuário excluiu o cadastro ID {$id}"
-        );
+        $this->log('delete_user', "Usuário excluiu o cadastro ID {$id}");
 
         // 7️ Mensagem de sucesso
         $this->setFlash('success', 'Usuário excluído com sucesso.');
