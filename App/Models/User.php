@@ -147,4 +147,59 @@ class User
         return $stmt->fetch()['total'];
     }
 
+    // Busca usuários aplicando filtro e paginação
+    public function searchPaginated($search, $limit, $offset)
+    {
+        // SQL com filtro por nome ou email
+        $sql = "
+            SELECT *
+            FROM users
+            WHERE name LIKE :search
+            OR email LIKE :search
+            ORDER BY id DESC
+            LIMIT :limit OFFSET :offset
+        ";
+
+        // Prepara a query
+        $stmt = $this->db->prepare($sql);
+
+        // Aplica o termo de busca com curingas
+        $stmt->bindValue(':search', '%' . $search . '%');
+
+        // LIMIT e OFFSET precisam ser inteiros
+        $stmt->bindValue(':limit', (int) $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, \PDO::PARAM_INT);
+
+        // Executa a consulta
+        $stmt->execute();
+
+        // Retorna os registros encontrados
+        return $stmt->fetchAll();
+    }
+
+
+    // Conta quantos usuários existem com o filtro aplicado
+    public function countSearch($search)
+    {
+        // SQL de contagem com o mesmo filtro
+        $sql = "
+            SELECT COUNT(*) AS total
+            FROM users
+            WHERE name LIKE :search
+            OR email LIKE :search
+        ";
+
+        // Prepara a query
+        $stmt = $this->db->prepare($sql);
+
+        // Aplica o termo de busca
+        $stmt->bindValue(':search', '%' . $search . '%');
+
+        // Executa
+        $stmt->execute();
+
+        // Retorna o total encontrado
+        return $stmt->fetch()['total'];
+    }
+
 }

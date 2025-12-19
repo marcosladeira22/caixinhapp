@@ -1,5 +1,14 @@
 <h1><?= $title ?></h1>
 
+<form method="get" action="<?= $base_url ?>/user/index">
+    <input
+        type="text"
+        name="search"
+        placeholder="Buscar por nome ou email"
+        value="<?= htmlspecialchars($search ?? '') ?>"
+    >
+    <button type="submit">Buscar</button>
+</form>
 <ul>
     <?php foreach ($users as $user): ?>
         <li>
@@ -20,7 +29,9 @@
 
         <!-- Botão Anterior -->
         <?php if ($page > 1): ?>
-            <a href="<?= $base_url ?>/user/index?page=<?= $page - 1 ?>">← Anterior</a>
+            <a href="<?= $base_url ?>/user/index?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>">
+                ← Anterior
+            </a>
         <?php endif; ?>
 
         <!-- Página atual -->
@@ -28,7 +39,9 @@
 
         <!-- Botão Próxima -->
         <?php if ($page < $totalPages): ?>
-            <a href="<?= $base_url ?>/user/index?page=<?= $page + 1 ?>">Próxima →</a>
+            <a href="<?= $base_url ?>/user/index?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>">
+                Próxima →
+            </a>
         <?php endif; ?>
 
     </div>

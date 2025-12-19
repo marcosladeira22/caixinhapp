@@ -14,13 +14,14 @@
     <!-- Conteúdo principal -->
     <h1><?= $title ?></h1>
 
+    <!--
     <ul>
     <?php foreach ($users as $user): ?>
         <li>
             <?= $user['name']; ?> - <?= $user['email']; ?>
         </li>
     <?php endforeach; ?>
-</ul>
-
+    </ul>
+    -->
 </body>
 </html>

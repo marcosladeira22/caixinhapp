@@ -12,13 +12,7 @@ class HomeController extends Controller
 {
     // Método padrão (ação index)
     public function index()
-    {
-        // Instancia o model
-        $userModel = new User();
-
-        // Busca usuários no banco
-        $users = $userModel->getAll();
-        
+    {        
         // Chama a view "home"
         // Envia dados para a view
         $this->view('home', [

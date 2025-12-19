@@ -36,11 +36,26 @@ class UserController extends Controller
         // Calcula o OFFSET
         $offset = ($page - 1) * $limit;
 
-        // Busca usuários paginados
-        $users = $this->user->getPaginated($limit, $offset);
+        // Termo de busca (se existir)
+        $search = $_GET['search'] ?? null;
 
-        // Total de usuários
-        $total = $this->user->countAll();
+        // Se houver termo de busca
+        if (!empty($search)) {
+
+            // Busca usuários com filtro
+            $users = $this->user->searchPaginated($search, $limit, $offset);
+
+            // Conta resultados do filtro
+            $total = $this->user->countSearch($search);
+
+        } else {
+
+            // Busca usuários sem filtro
+            $users = $this->user->getPaginated($limit, $offset);
+
+            // Conta total geral
+            $total = $this->user->countAll();
+        }
 
         // Calcula total de páginas
         $totalPages = ceil($total / $limit);
@@ -50,10 +65,10 @@ class UserController extends Controller
             'title'      => 'Usuários',
             'users'      => $users,
             'page'       => $page,
-            'totalPages' => $totalPages
+            'totalPages' => $totalPages,
+            'search'     => $search
         ]);
     }
-
 
     // CREATE — formulário
     public function create()
