@@ -26,9 +26,7 @@
             <?= $user['name']; ?> (<?= $user['email']; ?>)
             <?php if ($this->hasRole(['admin', 'manager'])): ?>
                 <a href="<?= $base_url ?>/user/edit/<?= $user['id']; ?>">Editar</a>
-            <?php endif; ?>
-            &nbsp;|&nbsp;
-            <?php if ($this->hasRole(['admin'])): ?>
+                &nbsp;|&nbsp;
                 <a href="<?= $base_url ?>/user/delete/<?= $user['id']; ?>"
                 onclick="return confirm('Excluir usuário?')">Excluir
                 </a>

@@ -134,17 +134,11 @@ class User
     }
 
 
-    // Retorna o total de usuários
+    // Conta apenas usuários ativos
     public function countAll()
     {
-        // SQL para contar registros
-        $sql = "SELECT COUNT(*) AS total FROM users";
-
-        // Executa a query
-        $stmt = $this->db->query($sql);
-
-        // Retorna o total
-        return $stmt->fetch()['total'];
+        $sql = "SELECT COUNT(*) FROM users WHERE deleted_at IS NULL";
+        return $this->db->query($sql)->fetchColumn();
     }
 
     // Busca usuários aplicando filtro e paginação
@@ -225,8 +219,8 @@ class User
         $sql = "
             SELECT *
             FROM users
-            WHERE name LIKE :search
-            OR email LIKE :search
+            WHERE deleted_at IS NULL
+            AND (name LIKE :search OR email LIKE :search)
             ORDER BY $order $dir
             LIMIT :limit OFFSET :offset
         ";
@@ -255,7 +249,6 @@ class User
         $allowedOrders = ['id', 'name', 'email'];
         $allowedDir = ['asc', 'desc'];
 
-        // Valida
         if (!in_array($order, $allowedOrders)) {
             $order = 'id';
         }
@@ -264,23 +257,54 @@ class User
             $dir = 'desc';
         }
 
-        // SQL
+        // Busca somente usuários ativos
         $sql = "
             SELECT *
             FROM users
+            WHERE deleted_at IS NULL
             ORDER BY $order $dir
             LIMIT :limit OFFSET :offset
         ";
 
-        // Prepara
         $stmt = $this->db->prepare($sql);
 
-        $stmt->bindValue(':limit', (int) $limit, \PDO::PARAM_INT);
-        $stmt->bindValue(':offset', (int) $offset, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int)$limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, \PDO::PARAM_INT);
 
         $stmt->execute();
 
         return $stmt->fetchAll();
+    }
+
+    // Desativa um usuário (soft delete)
+    public function softDelete($id)
+    {
+        $sql = "
+            UPDATE users
+            SET deleted_at = NOW()
+            WHERE id = :id
+            AND deleted_at IS NULL
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $id);
+
+        return $stmt->execute();
+    }
+
+    // Reativa um usuário desativado
+    public function restore($id)
+    {
+        $sql = "
+            UPDATE users
+            SET deleted_at = NULL
+            WHERE id = :id
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $id);
+
+        return $stmt->execute();
     }
 
 
