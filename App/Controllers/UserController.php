@@ -41,50 +41,60 @@ class UserController extends Controller
     // CREATE — salva no banco
     public function store()
     {
-        // Valida o token CSRF
+        // 1 - Valida CSRF
         if (!$this->validateCsrf()) {
-
-            // Mensagem de erro
             $this->setFlash('error', 'Token inválido. Recarregue o formulário.');
-
-            // Volta para o formulário
             $this->redirect('/user/create');
         }
 
-        // Define os campos obrigatórios e seus nomes amigáveis
+        // 2️ - Campos obrigatórios
         $errors = $this->validateRequired([
             'name'     => 'Nome',
             'email'    => 'Email',
             'password' => 'Senha'
         ]);
 
-        // Se existir qualquer erro de validação
+        // 3️ - Validação de formato de email
+        if (!empty($_POST['email']) && !$this->validateEmail($_POST['email'])) {
+            $errors[] = 'O email informado não é válido.';
+        }
+
+        // 4️ - Verifica se email já existe
+        if (!empty($_POST['email']) && $this->user->emailExists($_POST['email'])) {
+            $errors[] = 'Este email já está cadastrado.';
+        }
+
+        // 5️ - Validação de tamanho mínimo da senha
+        if (!empty($_POST['password']) && !$this->validateMinLength($_POST['password'], 6)) {
+            $errors[] = 'A senha deve ter no mínimo 6 caracteres.';
+        }
+
+        // 6️ - Se existir qualquer erro
         if (!empty($errors)) {
 
-            // Salva os erros na sessão como flash message
+            // Salva todos os erros juntos
             $this->setFlash('error', implode('<br>', $errors));
 
-            // Volta para o formulário de cadastro
+            // Volta para o formulário
             $this->redirect('/user/create');
         }
 
-        // Gera o hash seguro da senha
+        // 7️ - Gera hash seguro da senha
         $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-        // Salva o usuário no banco
+        // 8️ - Salva no banco
         $this->user->create(
             $_POST['name'],
             $_POST['email'],
             $password
         );
 
-        // Mensagem de sucesso
+        // 9️ - Mensagem de sucesso
         $this->setFlash('success', 'Usuário cadastrado com sucesso.');
 
-        // Redireciona para a listagem
+        // 10 - Redireciona para listagem
         $this->redirect('/user/index');
     }
-
 
     // UPDATE — formulário
     public function edit($id)

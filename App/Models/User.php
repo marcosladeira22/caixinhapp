@@ -76,12 +76,25 @@ class User
     }
 
     public function findByEmail($email)
-{
-    $sql = "SELECT * FROM users WHERE email = :email LIMIT 1";
-    $stmt = $this->db->prepare($sql);
-    $stmt->bindValue(':email', $email);
-    $stmt->execute();
+    {
+        $sql = "SELECT * FROM users WHERE email = :email LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':email', $email);
+        $stmt->execute();
 
-    return $stmt->fetch();
-}
+        return $stmt->fetch();
+    }
+
+    // Verifica se um email já existe no banco
+    public function emailExists($email)
+    {
+        $sql = "SELECT id FROM users WHERE email = :email LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':email', $email);
+        $stmt->execute();
+
+        // Retorna true se encontrar algum registro
+        return $stmt->fetch() ? true : false;
+    }
+
 }

@@ -125,4 +125,18 @@ class Controller
         );
     }
 
+    // Valida se um email tem formato válido
+    protected function validateEmail($email)
+    {
+        // Usa filtro nativo do PHP para email
+        return filter_var($email, FILTER_VALIDATE_EMAIL);
+    }
+
+    // Valida tamanho mínimo de um campo
+    protected function validateMinLength($value, $min)
+    {
+        // Remove espaços extras e conta caracteres
+        return strlen(trim($value)) >= $min;
+    }
+
 }
