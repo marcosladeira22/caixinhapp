@@ -33,6 +33,16 @@ class UserController extends Controller
     // CREATE — formulário
     public function create()
     {
+        // Verifica se é administrador
+        if (!$this->isAdmin()) {
+
+            // Mensagem de erro
+            $this->setFlash('error', 'Acesso negado.');
+
+            // Redireciona para listagem
+            $this->redirect('/user/index');
+        }
+        
         $this->view('users/create', [
             'title' => 'Novo usuário'
         ]);
@@ -41,6 +51,16 @@ class UserController extends Controller
     // CREATE — salva no banco
     public function store()
     {
+        // Verifica se é administrador
+        if (!$this->isAdmin()) {
+
+            // Mensagem de erro
+            $this->setFlash('error', 'Acesso negado.');
+
+            // Redireciona para listagem
+            $this->redirect('/user/index');
+        }
+
         // 1 - Valida CSRF
         if (!$this->validateCsrf()) {
             $this->setFlash('error', 'Token inválido. Recarregue o formulário.');
@@ -99,6 +119,16 @@ class UserController extends Controller
     // UPDATE — formulário
     public function edit($id)
     {
+        // Verifica se é administrador
+        if (!$this->isAdmin()) {
+
+            // Mensagem de erro
+            $this->setFlash('error', 'Acesso negado.');
+
+            // Redireciona para listagem
+            $this->redirect('/user/index');
+        }
+
         $user = $this->user->find($id);
 
         $this->view('users/edit', [
@@ -110,6 +140,16 @@ class UserController extends Controller
     // UPDATE — salva edição
     public function update($id)
     {
+        // Verifica se é administrador
+        if (!$this->isAdmin()) {
+
+            // Mensagem de erro
+            $this->setFlash('error', 'Acesso negado.');
+
+            // Redireciona para listagem
+            $this->redirect('/user/index');
+        }
+
         $this->user->update(
             $id,
             $_POST['name'],
@@ -123,9 +163,23 @@ class UserController extends Controller
     // DELETE — remove
     public function delete($id)
     {
+        // Verifica se é administrador
+        if (!$this->isAdmin()) {
+
+            // Mensagem de erro
+            $this->setFlash('error', 'Acesso negado.');
+
+            // Redireciona para listagem
+            $this->redirect('/user/index');
+        }
+
+        // Remove usuário
         $this->user->delete($id);
 
-        //Redirecionamento
+        // Mensagem de sucesso
+        $this->setFlash('success', 'Usuário removido.');
+
+        // Redireciona
         $this->redirect('/user/index');
     }
 }

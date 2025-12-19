@@ -139,4 +139,16 @@ class Controller
         return strlen(trim($value)) >= $min;
     }
 
+    // Verifica se o usuário é administrador
+    protected function isAdmin()
+    {
+        // Verifica se existe usuário logado
+        if (!isset($_SESSION['user'])) {
+            return false;
+        }
+
+        // Retorna true se o nível for admin
+        return $_SESSION['user']['role'] === 'admin';
+    }
+
 }

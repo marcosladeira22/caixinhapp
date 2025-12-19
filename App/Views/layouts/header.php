@@ -21,7 +21,9 @@
     </p>
     <nav>
         <a href="<?= $base_url ?>/user/index">Usuários</a>
-        <a href="<?= $base_url ?>/user/create">Novo usuário</a>
+        <?php if ($this->isAdmin()): ?>
+            <a href="<?= $base_url ?>/user/create">Novo usuário</a>
+        <?php endif; ?>
     </nav>
 <?php endif; ?>
 <hr>

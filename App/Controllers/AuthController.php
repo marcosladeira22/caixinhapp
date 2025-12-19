@@ -84,7 +84,8 @@ class AuthController extends Controller
         $_SESSION['user'] = [
             'id'    => $data['id'],
             'name'  => $data['name'],
-            'email' => $data['email']
+            'email' => $data['email'],
+            'role'  => $data['role']
         ];
 
         // Mensagem de sucesso

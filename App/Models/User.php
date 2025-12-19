@@ -18,10 +18,10 @@ class User
     }
 
     // CREATE — insere usuário
-    public function create($name, $email, $password)
+    public function create($name, $email, $password, $role = 'user')
     {
         // SQL para inserir usuário
-        $sql = "INSERT INTO users (name, email, password) VALUES (:name, :email, :password)";
+        $sql = "INSERT INTO users (name, email, password, role) VALUES (:name, :email, :password, :role)";
         
         // Prepara a query (proteção contra SQL Injection)
         $stmt = $this->db->prepare($sql);
@@ -30,6 +30,9 @@ class User
         $stmt->bindValue(':name', $name);
         $stmt->bindValue(':email', $email);
         $stmt->bindValue(':password', $password);
+        $stmt->bindValue(':role', $role);
+
+        // Executa no banco
         $stmt->execute();
     }
 
@@ -77,11 +80,19 @@ class User
 
     public function findByEmail($email)
     {
+        // SQL para buscar usuário pelo email
         $sql = "SELECT * FROM users WHERE email = :email LIMIT 1";
+
+        // Prepara a query
         $stmt = $this->db->prepare($sql);
+
+        // Associa o email
         $stmt->bindValue(':email', $email);
+
+        // Executa
         $stmt->execute();
 
+        // Retorna os dados do usuário
         return $stmt->fetch();
     }
 
