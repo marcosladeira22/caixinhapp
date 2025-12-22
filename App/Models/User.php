@@ -81,7 +81,10 @@ class User
     public function findByEmail($email)
     {
         // SQL para buscar usuário pelo email
-        $sql = "SELECT * FROM users WHERE email = :email LIMIT 1";
+        $sql = "SELECT * FROM users
+        WHERE email = :email
+        AND deleted_at IS NULL
+        LIMIT 1";
 
         // Prepara a query
         $stmt = $this->db->prepare($sql);
@@ -95,6 +98,22 @@ class User
         // Retorna os dados do usuário
         return $stmt->fetch();
     }
+
+    public function findByEmailIncludingInactive($email)
+    {
+        // SQL busca usuário ativo OU desativado
+        $sql = "SELECT * FROM users
+            WHERE email = :email
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':email', $email);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
 
     // Verifica se um email já existe no banco
     public function emailExists($email)

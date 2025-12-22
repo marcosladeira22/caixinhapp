@@ -17,7 +17,7 @@
 <?php endif; ?>
 
 
-<?php if (isset($_SESSION['user'])): ?>
+<?php if (isset($_SESSION['user'])): $avatar = $_SESSION['user']['avatar'] ?? 'default.png';?>
     <img src="<?= $base_url ?>/uploads/avatars/<?= $_SESSION['user']['avatar'] ?? 'default.png'; ?>" 
     width="40" style="border-radius:50%;">
     <p>

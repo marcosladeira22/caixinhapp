@@ -61,18 +61,34 @@ class AuthController extends Controller
         // Instancia o model User
         $user = new User();
 
-        // Busca o usuário pelo email informado
-        $data = $user->findByEmail($_POST['email']);
+        // Busca usuário (ativo ou não)
+        $data = $user->findByEmailIncludingInactive($_POST['email']);
 
-        // Se usuário não existir ou senha estiver incorreta
-        if (!$data || !password_verify($_POST['password'], $data['password'])) {
+        // Se usuário não existir
+        if (!$data) {
 
-            // Mensagem de erro
-            $this->setFlash('error', 'Email ou senha inválidos.');
-
-            // Volta para o login
+            $this->setFlash('error', 'E-mail ou senha inválidos.');
             $this->redirect('/auth/index');
         }
+
+        // Se usuário estiver desativado
+        if ($data['deleted_at'] !== null) {
+
+            $this->setFlash(
+                'error',
+                'Seu usuário está desativado. Entre em contato com o administrador.'
+            );
+
+            $this->redirect('/auth/index');
+        }
+
+        // Se senha estiver incorreta
+        if (!password_verify($_POST['password'], $data['password'])) {
+
+            $this->setFlash('error', 'E-mail ou senha inválidos.');
+            $this->redirect('/auth/index');
+        }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -85,7 +101,8 @@ class AuthController extends Controller
             'id'    => $data['id'],
             'name'  => $data['name'],
             'email' => $data['email'],
-            'role'  => $data['role']
+            'role'  => $data['role'],
+            'avatar' => $data['avatar'] ?? null
         ];
 
         // Registra log de login
