@@ -16,7 +16,10 @@
     <p style="color:red"><?= $error ?></p>
 <?php endif; ?>
 
+
 <?php if (isset($_SESSION['user'])): ?>
+    <img src="<?= $base_url ?>/uploads/avatars/<?= $_SESSION['user']['avatar'] ?? 'default.png'; ?>" 
+    width="40" style="border-radius:50%;">
     <p>
         Olá, <?= $_SESSION['user']['name'] ?> |
         <a href="/caixinhapp/public/auth/logout">Sair</a>

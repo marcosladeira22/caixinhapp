@@ -354,4 +354,66 @@ class UserController extends Controller
         ]);
     }
 
+    public function avatar()
+    {
+        // Apenas usuário logado
+        if (!isset($_SESSION['user'])) {
+            $this->redirect('/login/index');
+        }
+
+        // Carrega view
+        $this->view('users/avatar', [
+            'title' => 'Alterar avatar'
+        ]);
+    }
+
+    public function uploadAvatar()
+    {
+        // Verifica se usuário está logado
+        if (!isset($_SESSION['user'])) {
+            $this->redirect('/login/index');
+        }
+
+        // Verifica se arquivo foi enviado
+        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== 0) {
+            $this->setFlash('error', 'Erro ao enviar arquivo.');
+            $this->redirect('/user/avatar');
+        }
+
+        // Tipos permitidos
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+
+        // Verifica tipo do arquivo
+        if (!in_array($_FILES['avatar']['type'], $allowedTypes)) {
+            $this->setFlash('error', 'Formato de imagem inválido.');
+            $this->redirect('/user/avatar');
+        }
+
+        // Gera nome único para o arquivo
+        $extension = pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION);
+        $filename = uniqid() . '.' . $extension;
+
+        // Caminho de destino
+        $destination = __DIR__ . '/../../public/uploads/avatars/' . $filename;
+
+        // Move o arquivo
+        move_uploaded_file($_FILES['avatar']['tmp_name'], $destination);
+
+        // Atualiza no banco
+        $this->user->updateAvatar($_SESSION['user']['id'], $filename);
+
+        // Atualiza sessão
+        $_SESSION['user']['avatar'] = $filename;
+
+        // Log da ação
+        $this->log('update_avatar', 'Avatar atualizado');
+
+        // Mensagem de sucesso
+        $this->setFlash('success', 'Avatar atualizado com sucesso.');
+
+        // Redireciona
+        $this->redirect('/user/avatar');
+    }
+
+
 }

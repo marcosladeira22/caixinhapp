@@ -322,6 +322,26 @@ class User
         return $this->db->query($sql)->fetchAll();
     }
 
+    // Atualiza o avatar do usuário
+    public function updateAvatar($id, $filename)
+    {
+        // SQL para atualizar o avatar
+        $sql = "
+            UPDATE users
+            SET avatar = :avatar
+            WHERE id = :id
+        ";
+
+        // Prepara a query
+        $stmt = $this->db->prepare($sql);
+
+        // Associa os valores
+        $stmt->bindValue(':avatar', $filename);
+        $stmt->bindValue(':id', $id);
+
+        // Executa
+        return $stmt->execute();
+    }
 
 
 }
