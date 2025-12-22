@@ -29,6 +29,7 @@
         <?php endif; ?>
         <?php if ($this->hasRole(['admin'])): ?>
             <a href="<?= $base_url ?>/user/deleted">&nbsp;|&nbsp;Usuários desativados</a>
+            <a href="<?= $base_url ?>/log">&nbsp;|&nbsp;Logs</a>
         <?php endif; ?>
     </nav>
 <?php endif; ?>
