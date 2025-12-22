@@ -27,6 +27,9 @@
             <a href="<?= $base_url ?>/user/index">Usuários</a>&nbsp;|&nbsp;
             <a href="<?= $base_url ?>/user/create">Novo usuário</a>
         <?php endif; ?>
+        <?php if ($this->hasRole(['admin'])): ?>
+            <a href="<?= $base_url ?>/user/deleted">&nbsp;|&nbsp;Usuários desativados</a>
+        <?php endif; ?>
     </nav>
 <?php endif; ?>
 <hr>

@@ -307,5 +307,21 @@ class User
         return $stmt->execute();
     }
 
+    // Retorna usuários desativados (soft deleted)
+    public function getDeleted()
+    {
+        // SQL para buscar usuários que possuem deleted_at preenchido
+        $sql = "
+            SELECT *
+            FROM users
+            WHERE deleted_at IS NOT NULL
+            ORDER BY deleted_at DESC
+        ";
+
+        // Executa e retorna os resultados
+        return $this->db->query($sql)->fetchAll();
+    }
+
+
 
 }

@@ -332,4 +332,26 @@ class UserController extends Controller
         $this->redirect('/user/index');
     }
 
+    public function deleted()
+    {
+        // 1️ - Apenas administradores podem acessar
+        if (!$this->hasRole(['admin'])) {
+
+            // Mensagem de erro
+            $this->setFlash('error', 'Acesso negado.');
+
+            // Redireciona para usuários ativos
+            $this->redirect('/user/index');
+        }
+
+        // 2️ - Busca usuários desativados no model
+        $users = $this->user->getDeleted();
+
+        // 3️ - Carrega a view
+        $this->view('users/deleted', [
+            'title' => 'Usuários desativados',
+            'users' => $users
+        ]);
+    }
+
 }
