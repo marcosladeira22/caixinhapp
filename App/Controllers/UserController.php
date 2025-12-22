@@ -394,10 +394,23 @@ class UserController extends Controller
         $filename = uniqid() . '.' . $extension;
 
         // Caminho de destino
-        $destination = __DIR__ . '/../../public/uploads/avatars/' . $filename;
+        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/caixinhapp/public/uploads/avatars/';
 
+        // Garante que o diretório existe
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Caminho final do arquivo
+        $destination = $uploadDir . $filename;
+        
         // Move o arquivo
-        move_uploaded_file($_FILES['avatar']['tmp_name'], $destination);
+        if (!move_uploaded_file($_FILES['avatar']['tmp_name'], $destination)) {
+
+            // Se falhar, aborta
+            $this->setFlash('error', 'Falha ao salvar o arquivo.');
+            $this->redirect('/user/avatar');
+        }
 
         // Atualiza no banco
         $this->user->updateAvatar($_SESSION['user']['id'], $filename);

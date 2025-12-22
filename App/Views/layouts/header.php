@@ -25,7 +25,8 @@
         <a href="/caixinhapp/public/auth/logout">Sair</a>
     </p>
     <nav>
-        <a href="<?= $base_url ?>/home">Home</a>&nbsp;
+        <a href="<?= $base_url ?>/home">Home</a>&nbsp;|
+        <a href="<?= $base_url ?>/user/avatar">Perfil</a>&nbsp;
         <?php if ($this->hasRole(['admin', 'manager'])): ?>|&nbsp;
             <a href="<?= $base_url ?>/user/index">Usuários</a>&nbsp;|&nbsp;
             <a href="<?= $base_url ?>/user/create">Novo usuário</a>
