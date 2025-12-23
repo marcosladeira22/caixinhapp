@@ -1,4 +1,4 @@
-<h2>Alterar avatar</h2>
+<h2><?= $title ?></h2>
 
 <form method="post" action="<?= $base_url ?>/user/uploadAvatar" enctype="multipart/form-data">
 

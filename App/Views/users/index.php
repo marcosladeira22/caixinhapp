@@ -27,6 +27,8 @@
             <?php if ($this->hasRole(['admin', 'manager'])): ?>
                 <a href="<?= $base_url ?>/user/edit/<?= $user['id']; ?>">Editar</a>
                 &nbsp;|&nbsp;
+            <?php endif; ?>
+            <?php if ($this->can('delete_user')): ?>
                 <a href="<?= $base_url ?>/user/delete/<?= $user['id']; ?>"
                 onclick="return confirm('Excluir usuário?')">Excluir
                 </a>

@@ -1,4 +1,4 @@
-<h2>Usuários desativados</h2>
+<h2><?= $title ?></h2>
 
 <?php if (empty($users)): ?>
     <p>Nenhum usuário desativado.</p>

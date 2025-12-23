@@ -123,7 +123,8 @@ class UserController extends Controller
         $errors = $this->validateRequired([
             'name'     => 'Nome',
             'email'    => 'Email',
-            'password' => 'Senha'
+            'password' => 'Senha',
+            'role'     => 'Role'
         ]);
 
         // 3️ - Validação de formato de email
@@ -158,6 +159,7 @@ class UserController extends Controller
         $this->user->create(
             $_POST['name'],
             $_POST['email'],
+            $_POST['role'],
             $password
         );
 
@@ -225,14 +227,36 @@ class UserController extends Controller
             $this->redirect('/user/index');
         }
 
+        if (!empty($_POST['password']) && !$this->validateMinLength($_POST['password'], 6)) {
+            $errors[] = 'A senha deve ter no mínimo 6 caracteres.';
+        }
+
+        // Se existir qualquer erro
+        if (!empty($errors)) {
+
+            // Salva todos os erros juntos
+            $this->setFlash('error', implode('<br>', $errors));
+
+            // Volta para o formulário
+            $this->redirect('/user/create');
+        }
+
+        // Gera hash seguro da senha
+        $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+
         $this->user->update(
             $id,
             $_POST['name'],
-            $_POST['email']
+            $_POST['email'],
+            $_POST['role'],
+            $password
         );
 
         // Log de edição
         $this->log('update_user', "Usuário editou o cadastro ID {$id}");
+
+        // Mensagem de sucesso
+        $this->setFlash('success', "Usuário ID {$id} alterado com sucesso.");
 
         //Redirecionamento
         $this->redirect('/user/index');
@@ -243,7 +267,7 @@ class UserController extends Controller
     {
         // 1️ - Verifica se o usuário logado é admin ou manager
         // Se não for, bloqueia o acesso
-        if (!$this->hasRole(['admin', 'manager'])) {
+        if (!$this->can('delete_user')) {
 
             // Define mensagem de erro
             $this->setFlash('error', 'Acesso negado.');

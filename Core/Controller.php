@@ -3,6 +3,8 @@
 // Define o namespace da classe
 namespace Core;
 
+use App\Models\Permission;
+
 // Classe base para todos os controllers
 class Controller
 {
@@ -190,6 +192,24 @@ class Controller
             $action,                  // ação executada
             $description             // descrição opcional
         );
+    }
+
+    // Verifica se o usuário tem uma permissão específica
+    protected function can($permission)
+    {
+        // Usuário precisa estar logado
+        if (!isset($_SESSION['user'])) {
+            return false;
+        }
+
+        // Papel do usuário
+        $role = $_SESSION['user']['role'];
+
+        // Instancia model Permission
+        $perm = new Permission();
+
+        // Verifica permissão
+        return $perm->roleHasPermission($role, $permission);
     }
 
 
