@@ -28,6 +28,8 @@ class UserController extends Controller
     }
 
     /**
+     * @permission view_users
+     * 
      * LISTAGEM DE USUÁRIOS
      * Admin e Manager veem todos
      * User comum não deveria acessar (regra simples)
@@ -101,6 +103,7 @@ class UserController extends Controller
     }
 
     /**
+     * 
      * FORMULÁRIO DE CRIAÇÃO
      * Admin e Manager
      */
@@ -117,6 +120,8 @@ class UserController extends Controller
     }
 
     /**
+     * @permission create_user
+     * 
      * SALVA NOVO USUÁRIO
      */
     public function store()
@@ -296,6 +301,8 @@ class UserController extends Controller
     }
 
     /**
+     * @permission delete_user
+     * 
      * SOFT DELETE
      */
     public function delete($id)
@@ -351,6 +358,8 @@ class UserController extends Controller
     }
 
     /**
+     * @permission force_delete_user
+     * 
      * EXCLUSÃO DEFINITIVA (HARD DELETE)
      * Apenas administrador
      */

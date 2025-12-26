@@ -11,7 +11,7 @@ class Router
     {
         // Captura a URL enviada pelo .htaccess
         // Se não existir, define um padrão
-        $url = $_GET['url'] ?? 'home/index';
+        $url = $_GET['url'] ?? 'auth/index';
 
         // Remove possíveis barras extras
         $url = trim($url, '/');
@@ -80,8 +80,26 @@ class Router
             die("Método não encontrado.");
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | MIDDLEWARE DE PERMISSÃO (RBAC AVANÇADO)
+        |--------------------------------------------------------------------------
+        | Verifica se o usuário tem permissão para acessar o método
+        */
+        if (!in_array($controllerName, $publicControllers)) {
+
+            $allowed = \Core\Middleware\PermissionMiddleware::handle($controller, $method);
+
+            if (!$allowed) {
+                
+                $_SESSION['flash']['error'] = 'Você não tem permissão para acessar esta ação.';
+
+                // Redireciona para área segura
+                header('Location: /caixinhapp/public/user/index');
+                exit;
+            }
+        }
         // Executa o método do controller com os parâmetros
         call_user_func_array([$controller, $method], $params);
-
     }
 }
