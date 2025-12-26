@@ -4,7 +4,7 @@
     <p style="color:red"><?= $error ?></p>
 <?php endif; ?>
 
-<form method="post" action="<?= $base_url ?>/user/store">
+<form method="post" action="<?= $base_url ?>/user/store" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="<?= $this->csrfToken() ?>">
     <label for="">Nome</label>
     <input type="text" name="name" placeholder="Nome" required>
@@ -21,10 +21,10 @@
             <option value="admin">Administrador</option>
         <?php endif; ?>
     </select>
-    <!-- Avatar 
+    <br><br>
+    <!-- Avatar -->
     <label>Avatar</label>
     <input type="file" name="avatar" accept="image/*">
-    -->
     <br><br>
     <button type="submit">Salvar</button>
 </form>

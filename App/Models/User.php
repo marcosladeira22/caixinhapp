@@ -34,6 +34,10 @@ class User
 
         // Executa no banco
         $stmt->execute();
+
+        // RETORNA O ID DO USUÁRIO CRIADO
+        return $this->db->lastInsertId();
+        
     }
 
     // READ — lista todos
@@ -57,9 +61,7 @@ class User
     // UPDATE — atualiza usuário
     public function update($id, $name, $email)
     {
-        $stmt = $this->db->prepare(
-            "UPDATE users SET name = :name, email = :email WHERE id = :id"
-        );
+        $stmt = $this->db->prepare("UPDATE users SET name = :name, email = :email WHERE id = :id");
 
         return $stmt->execute([
             'id'    => $id,
@@ -71,11 +73,25 @@ class User
     // DELETE — remove usuário
     public function delete($id)
     {
-        $stmt = $this->db->prepare(
-            "DELETE FROM users WHERE id = :id"
-        );
+        $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
 
         return $stmt->execute(['id' => $id]);
+    }
+
+    public function updatePassword($id, $password)
+    {
+        // SQL para atualizar apenas a senha
+        $sql = "UPDATE users SET password = :password WHERE id = :id";
+
+        // Prepara a query
+        $stmt = $this->db->prepare($sql);
+
+        // Associa os valores
+        $stmt->bindValue(':password', $password);
+        $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+
+        // Executa
+        return $stmt->execute();
     }
 
     public function findByEmail($email)
@@ -114,7 +130,6 @@ class User
         return $stmt->fetch();
     }
 
-
     // Verifica se um email já existe no banco
     public function emailExists($email)
     {
@@ -151,7 +166,6 @@ class User
         // Retorna todos os registros
         return $stmt->fetchAll();
     }
-
 
     // Conta apenas usuários ativos
     public function countAll()
@@ -341,26 +355,46 @@ class User
         return $this->db->query($sql)->fetchAll();
     }
 
-    // Atualiza o avatar do usuário
-    public function updateAvatar($id, $filename)
+   public function uploadAvatar($userId, $file)
     {
-        // SQL para atualizar o avatar
-        $sql = "
-            UPDATE users
-            SET avatar = :avatar
-            WHERE id = :id
-        ";
+        // Tipos de imagem permitidos
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
 
-        // Prepara a query
+        // Valida tipo do arquivo
+        if (!in_array($file['type'], $allowedTypes)) {
+            return false;
+        }
+
+        // Extensão do arquivo original
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+
+        // Nome único para evitar conflitos
+        $filename = uniqid('avatar_') . '.' . $extension;
+
+        // Diretório físico real
+        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/caixinhapp/public/uploads/avatars/';
+
+        // Cria diretório se não existir
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Caminho final do arquivo
+        $destination = $uploadDir . $filename;
+
+        // Move o arquivo para o destino
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            return false;
+        }
+
+        // Atualiza o nome do avatar no banco
+        $sql = "UPDATE users SET avatar = :avatar WHERE id = :id";
+
         $stmt = $this->db->prepare($sql);
-
-        // Associa os valores
         $stmt->bindValue(':avatar', $filename);
-        $stmt->bindValue(':id', $id);
+        $stmt->bindValue(':id', $userId);
 
-        // Executa
         return $stmt->execute();
     }
-
 
 }

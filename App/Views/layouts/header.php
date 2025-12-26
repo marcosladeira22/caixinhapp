@@ -26,8 +26,7 @@
     </p>
     <nav>
         <a href="<?= $base_url ?>/home">Home</a>&nbsp;|
-        <a href="<?= $base_url ?>/user/avatar">Perfil</a>&nbsp;
-        <?php if ($this->hasRole(['admin', 'manager'])): ?>|&nbsp;
+        <?php if ($this->hasRole(['admin', 'manager'])): ?>
             <a href="<?= $base_url ?>/user/index">Usuários</a>&nbsp;|&nbsp;
             <a href="<?= $base_url ?>/user/create">Novo usuário</a>
         <?php endif; ?>

@@ -27,7 +27,13 @@
     <input type="password" name="password" placeholder="Senha">
     <br>
     <small>(Deixe em branco para não alterar)</small>
-
+    <br><br>
+    <?php if (!empty($user['avatar'])): ?>
+        <img src="<?= $base_url ?>/uploads/avatars/<?= $user['avatar'] ?>" width="100">
+    <?php endif; ?>
+    <br><br>
+    <label>Novo avatar</label>
+    <input type="file" name="avatar" accept="image/*">
     <br><br>
     <button type="submit">Atualizar</button>
 </form>
