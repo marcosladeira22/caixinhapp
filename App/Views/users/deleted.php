@@ -27,6 +27,15 @@
                    onclick="return confirm('Deseja restaurar este usuário?')">
                     Restaurar
                 </a>
+                 <!-- Exclusão definitiva (somente admin) -->
+                <?php if ($_SESSION['user']['role'] === 'admin'): ?>
+                    &nbsp;|&nbsp;
+                    <a href="<?= $base_url ?>/user/forceDelete/<?= $user['id'] ?>"
+                        onclick="return confirm('ATENÇÃO: Exclusão definitiva. Deseja continuar?')"
+                        style="color:red">
+                        Excluir definitivamente
+                    </a>
+                <?php endif; ?>
             </td>
         </tr>
     <?php endforeach; ?>

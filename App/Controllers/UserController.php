@@ -330,6 +330,67 @@ class UserController extends Controller
     }
 
     /**
+     * Lista usuários desativados (soft delete)
+     */
+    public function deleted()
+    {
+        // Apenas administradores
+        if (!$this->hasRole(['admin'])) {
+            $this->setFlash('error', 'Acesso negado.');
+            $this->redirect('/user/index');
+        }
+
+        // Busca usuários desativados
+        $users = $this->user->getDeleted();
+
+        // Renderiza a view
+        $this->view('users/deleted', [
+            'title' => 'Usuários desativados',
+            'users' => $users
+        ]);
+    }
+
+    /**
+     * EXCLUSÃO DEFINITIVA (HARD DELETE)
+     * Apenas administrador
+     */
+    public function forceDelete($id)
+    {
+        // 1️ - Apenas administradores podem excluir definitivamente
+        if (!$this->hasRole(['admin'])) {
+            $this->setFlash('error', 'Acesso negado.');
+            $this->redirect('/user/deleted');
+        }
+
+        // 2️ - Busca usuário
+        $user = $this->user->find($id);
+
+        if (!$user) {
+            $this->setFlash('error', 'Usuário não encontrado.');
+            $this->redirect('/user/deleted');
+        }
+
+        // 3️ - Regra de segurança extra:
+        // impede excluir a si mesmo
+        if ($_SESSION['user']['id'] == $id) {
+            $this->setFlash('error', 'Você não pode excluir seu próprio usuário.');
+            $this->redirect('/user/deleted');
+        }
+
+        // 4️ - Exclusão definitiva no banco
+        $this->user->forceDelete($id);
+
+        // 5️ - Log de auditoria
+        $this->log('force_delete_user', "Usuário ID {$id} excluído definitivamente");
+
+        // 6️ - Mensagem de sucesso
+        $this->setFlash('success', 'Usuário excluído definitivamente.');
+
+        // 7️ - Retorna para tela de desativados
+        $this->redirect('/user/deleted');
+    }
+
+    /**
      * RESTAURA USUÁRIO
      */
     public function restore($id)

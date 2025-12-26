@@ -78,6 +78,16 @@ class User
         return $stmt->execute(['id' => $id]);
     }
 
+    /**
+     * HARD DELETE — remove definitivamente do banco
+     */
+    public function forceDelete($id)
+    {
+        $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
+
+        return $stmt->execute(['id' => $id]);
+    }
+
     public function updatePassword($id, $password)
     {
         // SQL para atualizar apenas a senha
