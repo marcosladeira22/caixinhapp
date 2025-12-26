@@ -11,14 +11,88 @@ class Permission
 
     public function __construct()
     {
-        // Usa a conexão Singleton
+        // Usa a conexão Singleton do projeto
         $this->db = Database::getConnection();
     }
 
-    // Verifica se um papel possui determinada permissão
+    /**
+     * Retorna TODAS as permissões cadastradas
+     */
+    public function getAll()
+    {
+        $sql = "SELECT id, name, description FROM permissions ORDER BY name ASC";
+
+        return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retorna as permissões associadas a um role
+     * Ex: ['delete_user', 'edit_user']
+     */
+    public function getPermissionsByRole($role)
+    {
+        $sql = "SELECT p.name
+                FROM permissions p
+                JOIN role_permissions rp ON rp.permission_id = p.id
+                WHERE rp.role = :role
+            ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':role', $role);
+        $stmt->execute();
+
+        // Retorna apenas os nomes das permissões
+        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC),'name');
+    }
+
+    /**
+     * Remove TODAS as permissões de um role
+     */
+    public function removeAllFromRole($role)
+    {
+        $sql = "DELETE FROM role_permissions WHERE role = :role";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':role', $role);
+
+        return $stmt->execute();
+    }
+
+    /**
+     * Associa uma permissão a um role
+     */
+    public function assignPermissionToRole($role, $permissionName)
+    {
+        // Busca o ID da permissão pelo nome
+        $sqlPermission = "SELECT id FROM permissions WHERE name = :name LIMIT 1";
+
+        $stmt = $this->db->prepare($sqlPermission);
+        $stmt->bindValue(':name', $permissionName);
+        $stmt->execute();
+
+        $permission = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Se a permissão não existir, aborta
+        if (!$permission) {
+            return false;
+        }
+
+        // Insere a relação role ↔ permissão
+        $sqlInsert = "INSERT INTO role_permissions (role, permission_id) VALUES (:role, :permission_id)";
+
+        $stmt = $this->db->prepare($sqlInsert);
+        $stmt->bindValue(':role', $role);
+        $stmt->bindValue(':permission_id', $permission['id']);
+
+        return $stmt->execute();
+    }
+
+    /**
+     * Método já existente usado pelo can()
+     * (mantido exatamente como está no seu projeto)
+     */
     public function roleHasPermission($role, $permission)
     {
-        // SQL para validar permissão
         $sql = "SELECT p.id
                 FROM permissions p
                 JOIN role_permissions rp ON rp.permission_id = p.id
@@ -34,53 +108,4 @@ class Permission
 
         return $stmt->fetch() !== false;
     }
-
-    // Retorna todas as permissões
-    public function all()
-    {
-        $sql = "SELECT * FROM permissions ORDER BY name";
-        return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Retorna permissões de um role
-    public function getByRole($role)
-    {
-        $sql = "SELECT permission_id
-                FROM role_permissions
-                WHERE role = :role
-            ";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':role', $role);
-        $stmt->execute();
-
-        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC),'permission_id');
-    }
-
-    // Associa permissão ao role
-    public function attach($role, $permissionId)
-    {
-        $sql = "INSERT IGNORE INTO role_permissions (role, permission_id)
-                VALUES (:role, :permission_id)
-            ";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':role', $role);
-        $stmt->bindValue(':permission_id', $permissionId);
-        return $stmt->execute();
-    }
-
-    // Remove permissão do role
-    public function detach($role, $permissionId)
-    {
-        $sql = "DELETE FROM role_permissions
-                WHERE role = :role AND permission_id = :permission_id
-            ";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':role', $role);
-        $stmt->bindValue(':permission_id', $permissionId);
-        return $stmt->execute();
-    }
-
 }
