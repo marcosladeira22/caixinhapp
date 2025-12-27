@@ -47,7 +47,7 @@ class LogController extends Controller
 
         // Envia para view
         $this->view('logs/index', [
-            'title'  => 'Auditoria do Sistema',
+            'title'  => 'Logs do Sistema',
             'logs'   => $logs,
             'pages'  => $pages,
             'page'   => $page,

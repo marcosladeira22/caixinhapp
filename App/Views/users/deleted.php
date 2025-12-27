@@ -21,7 +21,7 @@
             <td><?= $user['id']; ?></td>
             <td><?= htmlspecialchars($user['name']); ?></td>
             <td><?= htmlspecialchars($user['email']); ?></td>
-            <td><?= $user['deleted_at']; ?></td>
+            <td><?= date('d/m/Y H:i:s', strtotime($user['deleted_at'])) ?></td>
             <td>
                 <a href="<?= $base_url ?>/user/restore/<?= $user['id']; ?>"
                    onclick="return confirm('Deseja restaurar este usuário?')">

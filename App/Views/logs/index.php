@@ -1,4 +1,4 @@
-<h2>Auditoria do Sistema</h2>
+<h2><?= htmlspecialchars($title) ?></h2>
 
 <form method="get">
     <input type="text" name="search"
@@ -38,7 +38,7 @@
                 <td><?= htmlspecialchars($log['name'] ?? 'Sistema'); ?></td>
                 <td><?= $log['action']; ?></td>
                 <td><?= htmlspecialchars($log['description']); ?></td>
-                <td><?= $log['created_at']; ?></td>
+                <td><?= date('d/m/Y H:i:s', strtotime($log['created_at'])) ?></td>
             </tr>
         <?php endforeach; ?>
     <?php endif; ?>

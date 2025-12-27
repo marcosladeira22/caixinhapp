@@ -33,6 +33,7 @@
         <?php if ($this->hasRole(['admin'])): ?>
             <a href="<?= $base_url ?>/user/deleted">&nbsp;|&nbsp;Usuários desativados</a>
             <a href="<?= $base_url ?>/log">&nbsp;|&nbsp;Logs</a>
+            <a href="<?= $base_url ?>/audit">&nbsp;|&nbsp;Auditoria</a>
             <a href="<?= $base_url ?>/permission">&nbsp;|&nbsp;Permissões</a>
         <?php endif; ?>
     </nav>

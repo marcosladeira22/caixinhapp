@@ -82,12 +82,11 @@ class Log
     // Conta logs com filtros
     public function countFiltered($search, $action)
     {
-        $sql = "
-            SELECT COUNT(*)
-            FROM logs
-            LEFT JOIN users ON users.id = logs.user_id
-            WHERE 1 = 1
-        ";
+        $sql = "SELECT COUNT(*)
+                FROM logs
+                LEFT JOIN users ON users.id = logs.user_id
+                WHERE 1 = 1
+            ";
 
         $params = [];
 
@@ -111,6 +110,5 @@ class Log
 
         return $stmt->fetchColumn();
     }
-
 
 }

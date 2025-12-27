@@ -2,6 +2,9 @@
 
 namespace Core\Middleware;
 
+use App\Models\AuditLog;
+
+
 class PermissionMiddleware
 {
     public static function handle($controller, $method)
@@ -72,7 +75,20 @@ class PermissionMiddleware
         | VERIFICA PERMISSÃO DIRETO NA SESSION
         |--------------------------------------------------------------------------
         */
-        return in_array($permission, $_SESSION['permissions']);
+        $allowed = in_array($permission, $_SESSION['permissions']);
+
+        $audit = new AuditLog();
+
+        $audit->log([
+            'user_id'    => $_SESSION['user']['id'],
+            'role'       => $_SESSION['user']['role'],
+            'action'     => $permission,
+            'controller' => $controllerName,
+            'method'     => $method,
+            'ip'         => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+        ]);
+
+        return $allowed;
     }
 
 }
