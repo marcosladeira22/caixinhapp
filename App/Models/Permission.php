@@ -33,16 +33,14 @@ class Permission
     {
         $sql = "SELECT p.name
                 FROM permissions p
-                JOIN role_permissions rp ON rp.permission_id = p.id
+                INNER JOIN role_permissions rp ON rp.permission_id = p.id
                 WHERE rp.role = :role
             ";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':role', $role);
-        $stmt->execute();
+        $stmt->execute(['role' => $role]);
 
-        // Retorna apenas os nomes das permissões
-        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC),'name');
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN);
     }
 
     /**
@@ -108,4 +106,5 @@ class Permission
 
         return $stmt->fetch() !== false;
     }
+
 }

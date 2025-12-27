@@ -69,10 +69,10 @@ class PermissionMiddleware
 
         /*
         |--------------------------------------------------------------------------
-        | VERIFICA PERMISSÃO
+        | VERIFICA PERMISSÃO DIRETO NA SESSION
         |--------------------------------------------------------------------------
         */
-        return $controller->can($permission);
+        return in_array($permission, $_SESSION['permissions']);
     }
 
 }

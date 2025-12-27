@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use Core\Controller;
 use App\Models\User;
+use App\Models\Permission;
+
 
 // Controller responsável pela autenticação
 class AuthController extends Controller
@@ -105,6 +107,11 @@ class AuthController extends Controller
             'avatar' => $data['avatar'] ?? null
         ];
 
+        // Carrega permissões do role
+        $permissionModel = new Permission();
+
+        $_SESSION['permissions'] = $permissionModel->getPermissionsByRole($data['role']);
+
         // Registra log de login
         $this->log('login', 'Usuário realizou login no sistema');
 
@@ -123,6 +130,7 @@ class AuthController extends Controller
         
         // Remove dados do usuário da sessão
         unset($_SESSION['user']);
+        unset($_SESSION['permissions']);
 
         // Destrói a sessão
         session_destroy();

@@ -195,25 +195,26 @@ class Controller
     }
 
     // Verifica se o usuário tem uma permissão específica
-    public function can($permission)
+    protected function can($permission)
     {
-        // Usuário precisa estar logado
+        // Precisa estar logado
         if (!isset($_SESSION['user'])) {
             return false;
         }
 
-        // ADMIN TEM ACESSO TOTAL
+        // Admin sempre pode tudo
         if ($_SESSION['user']['role'] === 'admin') {
             return true;
         }
 
-        // Demais papéis seguem o RBAC normal
-        $role = $_SESSION['user']['role'];
+        // Permissões carregadas na sessão
+        if (!isset($_SESSION['permissions'])) {
+            return false;
+        }
 
-        $perm = new Permission();
-
-        return $perm->roleHasPermission($role, $permission);
+        return in_array($permission, $_SESSION['permissions']);
     }
+
 
 
 
