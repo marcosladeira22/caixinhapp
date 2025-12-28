@@ -98,6 +98,10 @@ class AuthController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        
+        // Carrega permissões do role
+        $permissionModel = new Permission();
+
         // Salva dados do usuário na sessão
         $_SESSION['user'] = [
             'id'    => $data['id'],
@@ -106,9 +110,6 @@ class AuthController extends Controller
             'role'  => $data['role'],
             'avatar' => $data['avatar'] ?? null
         ];
-
-        // Carrega permissões do role
-        $permissionModel = new Permission();
 
         $_SESSION['permissions'] = $permissionModel->getPermissionsByRole($data['role']);
 

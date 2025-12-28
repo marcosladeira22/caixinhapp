@@ -195,7 +195,7 @@ class Controller
     }
 
     // Verifica se o usuário tem uma permissão específica
-    protected function can($permission)
+    protected function can(string $permission): bool
     {
         // Precisa estar logado
         if (!isset($_SESSION['user'])) {
@@ -203,17 +203,18 @@ class Controller
         }
 
         // Admin sempre pode tudo
-        if ($_SESSION['user']['role'] === 'admin') {
+        if (($_SESSION['user']['role'] ?? null) === 'admin') {
             return true;
         }
 
-        // Permissões carregadas na sessão
-        if (!isset($_SESSION['permissions'])) {
+        // Permissões precisam existir e ser array
+        if (!isset($_SESSION['permissions']) || !is_array($_SESSION['permissions'])) {
             return false;
         }
 
-        return in_array($permission, $_SESSION['permissions']);
+        return in_array($permission, $_SESSION['permissions'], true);
     }
+
 
 
 
