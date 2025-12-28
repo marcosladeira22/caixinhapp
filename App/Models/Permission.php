@@ -107,4 +107,21 @@ class Permission
         return $stmt->fetch() !== false;
     }
 
+    public static function loadByUser(int $userId): array
+    {
+        $db = Database::getConnection();
+
+        $sql = "SELECT p.slug
+                FROM permissions p
+                JOIN role_permissions rp ON rp.permission_id = p.id
+                JOIN users u ON u.role_id = rp.role_id
+                WHERE u.id = :user
+            ";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['user' => $userId]);
+
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
 }

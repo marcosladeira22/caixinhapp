@@ -5,6 +5,7 @@ namespace App\Controllers;
 use Core\Controller;
 use App\Models\User;
 use App\Models\Permission;
+use Core\Auth;
 
 
 // Controller responsável pela autenticação
@@ -139,4 +140,33 @@ class AuthController extends Controller
         // Redireciona para login
         $this->redirect('/auth/index');
     }
+
+    public function authenticate()
+    {
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+
+        $userModel = new \App\Models\User();
+        $user = $userModel->findByEmail($email);
+
+        if (!$user || !password_verify($password, $user['password'])) {
+            $_SESSION['flash']['error'] = 'Usuário ou senha inválidos';
+            header('Location: /caixinhapp/public/auth/index');
+            exit;
+        }
+
+        // AQUI o $user EXISTE
+        $_SESSION['user'] = [
+            'id'    => $user['id'],
+            'name'  => $user['name'],
+            'email' => $user['email'],
+            'role'  => $user['role'],
+        ];
+
+        \Core\Auth::refreshPermissions();
+
+        header('Location: /caixinhapp/public/home/index');
+        exit;
+    }
+
 }
