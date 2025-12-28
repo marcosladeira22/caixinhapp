@@ -1,6 +1,6 @@
 <h2><?= htmlspecialchars($title) ?></h2>
 
-<table border="1" cellpadding="8" cellspacing="0" width="100%">
+<table border="1" cellpadding="9" cellspacing="0" width="100%">
     <thead>
         <tr>
             <th>ID</th>
@@ -9,6 +9,7 @@
             <th>Ação</th>
             <th>Controller</th>
             <th>Método</th>
+            <th>Params</th>
             <th>IP</th>
             <th>Data</th>
         </tr>
@@ -27,7 +28,8 @@
                     <td><?= htmlspecialchars($log['action']) ?></td>
                     <td><?= htmlspecialchars($log['controller']) ?></td>
                     <td><?= htmlspecialchars($log['method']) ?></td>
-                    <td><?= htmlspecialchars($log['ip_address']) ?></td>
+                    <td><?= htmlspecialchars($log['params'] ?? '-') ?></td>
+                    <td><?= htmlspecialchars($log['ip_address']?? '-') ?></td>
                     <td><?= date('d/m/Y H:i:s', strtotime($log['created_at'])) ?></td>
                 </tr>
             <?php endforeach; ?>

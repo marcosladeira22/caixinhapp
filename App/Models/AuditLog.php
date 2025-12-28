@@ -13,12 +13,13 @@ class AuditLog
         $this->db = \Core\Database::getConnection();
     }
 
-    public function log(array $data): void
+    // PADRÃO DO SISTEMA
+    public function create(array $data): void
     {
         $sql = "INSERT INTO audit_logs
-                (user_id, role, action, controller, method, ip_address)
+                (user_id, role, action, controller, method, params, ip_address, created_at)
                 VALUES
-                (:user_id, :role, :action, :controller, :method, :ip)
+                (:user_id, :role, :action, :controller, :method, :params, :ip, NOW())
             ";
 
         $stmt = $this->db->prepare($sql);
@@ -29,7 +30,8 @@ class AuditLog
             ':action'     => $data['action'],
             ':controller' => $data['controller'],
             ':method'     => $data['method'],
-            ':ip'         => $data['ip'],
+            ':params'     => $data['params'] ?? null,
+            ':ip'         => $data['ip_address'] ?? null,
         ]);
     }
 

@@ -79,13 +79,13 @@ class PermissionMiddleware
 
         $audit = new AuditLog();
 
-        $audit->log([
+        $audit->create([
             'user_id'    => $_SESSION['user']['id'],
             'role'       => $_SESSION['user']['role'],
             'action'     => $permission,
             'controller' => $controllerName,
             'method'     => $method,
-            'ip'         => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+            'ip'         => $_SERVER['REMOTE_ADDR'] ?? null,
         ]);
 
         return $allowed;
