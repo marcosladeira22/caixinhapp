@@ -1,10 +1,21 @@
 <h2><?= htmlspecialchars($title) ?></h2>
+<form method="GET">
+    <input type="text" name="user_id" placeholder="Usuário ID"
+           value="<?= htmlspecialchars($userId ?? '') ?>">
+
+    <input type="text" name="action" placeholder="Ação"
+           value="<?= htmlspecialchars($action ?? '') ?>">
+
+    <button type="submit">Filtrar</button>
+</form>
+
+<hr>
 
 <table border="1" cellpadding="9" cellspacing="0" width="100%">
     <thead>
         <tr>
             <th>ID</th>
-            <th>Usuário</th>
+            <th>ID Usuário</th>
             <th>Perfil</th>
             <th>Ação</th>
             <th>Controller</th>
@@ -36,3 +47,10 @@
         <?php endif; ?>
     </tbody>
 </table>
+<div>
+    <?php for ($i = 1; $i <= $pages; $i++): ?>
+        <a href="?page=<?= $i ?>&user_id=<?= $userId ?>&action=<?= $action ?>">
+            <?= $i ?>
+        </a>
+    <?php endfor; ?>
+</div>

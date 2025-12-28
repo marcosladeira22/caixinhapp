@@ -9,17 +9,36 @@ class AuditController extends Controller
 {
     public function index()
     {
-        // 🔐 Verificação correta no SEU sistema
+        // Permissão
         if (!$this->can('view_audit')) {
-            $_SESSION['flash']['error'] = 'Acesso negado.';
+            $this->setFlash('error', 'Acesso negado.');
             $this->redirect('/user/index');
         }
 
-        $logs = (new AuditLog())->all();
+        // Paginação
+        $page  = $_GET['page'] ?? 1;
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
+        // Filtros
+        $userId = $_GET['user_id'] ?? null;
+        $action = $_GET['action'] ?? null;
+
+        $model = new \App\Models\AuditLog();
+
+        $logs = $model->searchPaginated($userId, $action, $limit, $offset);
+
+        $total = $model->countFiltered($userId, $action);
+        $pages = ceil($total / $limit);
 
         $this->view('audit/index', [
-            'title' => 'Logs de Auditoria',
-            'logs'  => $logs
+            'title'  => 'Logs de Auditoria',
+            'logs'   => $logs,
+            'page'   => $page,
+            'pages'  => $pages,
+            'userId' => $userId,
+            'action' => $action
         ]);
     }
+
 }
