@@ -98,6 +98,8 @@ class AuthController extends Controller
         | LOGIN BEM-SUCEDIDO
         |--------------------------------------------------------------------------
         */
+        //Regenera o ID da sessão (SEGURANÇA)
+        session_regenerate_id(true);
 
         
         // Carrega permissões do role
@@ -134,8 +136,14 @@ class AuthController extends Controller
         unset($_SESSION['user']);
         unset($_SESSION['permissions']);
 
+        // Limpa todos os dados da sessão
+        $_SESSION = [];
+
         // Destrói a sessão
         session_destroy();
+
+        // Garante novo ID de sessão
+        session_regenerate_id(true);
 
         // Redireciona para login
         $this->redirect('/auth/index');

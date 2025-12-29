@@ -1,5 +1,10 @@
 <?php
 
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: no-referrer');
+
+
 // Mostrar erros (apenas em desenvolvimento)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
