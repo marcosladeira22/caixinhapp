@@ -362,4 +362,51 @@ class GrupoController extends Controller {
         header("Location: " . $_SERVER['HTTP_REFERER']);
         exit;
     }
+
+    // =========================
+    // REGRAS - EMPRESTIMO
+    // =========================
+    public function regras() {
+
+        $grupo_id = $_GET['grupo_id'];
+
+        $regraModel = new RegraEmprestimo($this->db);
+        $regra = $regraModel->buscarPorGrupo($grupo_id);
+
+        $this->view('grupo/regras', [
+            'grupo_id' => $grupo_id,
+            'regra' => $regra
+        ]);
+    }
+
+    // ===========================
+    // SALVAR REGRAS - EMPRESTIMO
+    // ===========================
+    public function salvarRegras() {
+
+        $regraModel = new RegraEmprestimo($this->db);
+
+        $regraModel->grupo_id            = $_POST['grupo_id'];
+        $regraModel->valor_minimo        = $_POST['valor_minimo'];
+        $regraModel->valor_maximo        = $_POST['valor_maximo'];
+        $regraModel->juros_inicial_tipo  = $_POST['juros_inicial_tipo'];
+        $regraModel->juros_inicial_valor = $_POST['juros_inicial_valor'];
+        $regraModel->juros_atraso_tipo   = $_POST['juros_atraso_tipo'];
+        $regraModel->juros_atraso_valor  = $_POST['juros_atraso_valor'];
+        $regraModel->dias_tolerancia     = $_POST['dias_tolerancia'];
+
+        // Verifica se já existe
+        $existe = $regraModel->buscarPorGrupo($_POST['grupo_id']);
+
+        if ($existe) {
+            $regraModel->atualizar();
+        } else {
+            $regraModel->criar();
+        }
+
+        $_SESSION['sucesso'] = "Regras salvas com sucesso";
+
+        header("Location: " . BASE_URL . "/grupos/" . $_POST['grupo_id']);
+        exit;
+    }
 }

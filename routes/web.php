@@ -126,6 +126,18 @@ switch ($uri) {
 
         (new GrupoController())->reenviarConvite();
         break;
+
+    case '/regras':
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+        (new GrupoController())->regras();
+        break;
+
+    case '/regras/salvar':
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+        (new GrupoController())->salvarRegras();
+        break;
         
     default:
         echo "Página não encontrada";
