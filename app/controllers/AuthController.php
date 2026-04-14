@@ -172,6 +172,41 @@ class AuthController extends Controller {
         exit;
     }
 
+    // Tela Perfil
+    public function perfil() {
+
+        $usuarioModel = new Usuario($this->db);
+
+        $usuario = $usuarioModel->buscarPorId($_SESSION['usuario_id']);
+
+        $this->view('auth/perfil', [
+            'usuario' => $usuario
+        ]);
+    }
+
+    // Salvar Perfil
+    public function salvarPerfil() {
+
+        $usuarioModel = new Usuario($this->db);
+
+        $usuarioModel->id = $_SESSION['usuario_id'];
+        $usuarioModel->nome = $_POST['nome'];
+
+        // NÃO altera email
+        // NÃO altera nível
+
+        if (!empty($_POST['senha'])) {
+            $usuarioModel->senha = password_hash($_POST['senha'], PASSWORD_DEFAULT);
+        }
+
+        $usuarioModel->atualizarPerfil();
+
+        $_SESSION['sucesso'] = "Perfil atualizado";
+
+        header("Location: " . BASE_URL . "/perfil");
+        exit;
+    }
+
 }
 
 ?>

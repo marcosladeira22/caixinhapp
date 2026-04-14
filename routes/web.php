@@ -88,6 +88,20 @@ switch ($uri) {
 
         (new GrupoController())->salvarPagamentos();
         break;
+
+    case '/perfil':
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+
+        (new AuthController())->perfil();
+        break;
+
+    case '/perfil/salvar':
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+
+        (new AuthController())->salvarPerfil();
+        break;
     
     //ROTA PROTEGIDA
     case '/dashboard':
@@ -99,8 +113,8 @@ switch ($uri) {
         break;
 
     case '/convite':
-    (new AuthController())->convite();
-    break;
+        (new AuthController())->convite();
+        break;
 
     case '/convite/aceitar':
         (new AuthController())->aceitarConvite();

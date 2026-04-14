@@ -101,6 +101,54 @@ class Usuario {
         return $stmt->execute();
     }
 
+    // BUSCAR USUÁRIO POR ID
+    public function buscarPorId($id) {
+
+        $query = "SELECT * FROM usuarios WHERE id = :id LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->bindParam(":id", $id);
+
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // ATUALIZAR PERFIL DO USUÁRIO
+    public function atualizarPerfil() {
+
+        // Se o usuário informou nova senha
+        if (!empty($this->senha)) {
+
+            // Atualiza nome + senha
+            $query = "UPDATE usuarios 
+                    SET nome = :nome, senha = :senha
+                    WHERE id = :id";
+
+            $stmt = $this->conn->prepare($query);
+
+            // Bind dos dados
+            $stmt->bindParam(":nome", $this->nome);
+            $stmt->bindParam(":senha", $this->senha);
+            $stmt->bindParam(":id", $this->id);
+
+        } else {
+
+            // Atualiza apenas o nome
+            $query = "UPDATE usuarios 
+                    SET nome = :nome
+                    WHERE id = :id";
+
+            $stmt = $this->conn->prepare($query);
+
+            $stmt->bindParam(":nome", $this->nome);
+            $stmt->bindParam(":id", $this->id);
+        }
+
+        // Executa a query
+        return $stmt->execute();
+    }
 }
 
 ?>

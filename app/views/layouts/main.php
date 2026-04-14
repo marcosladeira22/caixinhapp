@@ -10,19 +10,58 @@
 <body class="bg-light">
 
 <!-- HEADER -->
-<nav class="navbar navbar-dark bg-dark">
-    <div class="container">
-        <span class="navbar-brand">💰 CaixinhApp</span>
-        
-        <?php if(isset($_SESSION['usuario_id'])): ?>
-            <span class="navbar-brand"><?= $_SESSION['usuario_nome'] ?></span>
-            <a href="<?= BASE_URL ?>/logout" class="btn btn-danger btn-sm">Sair</a>
-        <?php endif; ?>
+<!-- NAVBAR GLOBAL -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+
+        <!-- Logo -->
+        <a class="navbar-brand" href="<?= BASE_URL ?>/dashboard">
+            💰 CaixinhApp
+        </a>
+        <!-- Botão mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="menu">
+
+            <!-- Menu esquerda -->
+            <ul class="navbar-nav me-auto">
+
+                <li class="nav-item">
+                    <a class="nav-link" href="<?= BASE_URL ?>/dashboard">
+                        Dashboard
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="<?= BASE_URL ?>/grupos/create">
+                        Criar Grupo
+                    </a>
+                </li>
+
+            </ul>
+
+            <!-- Menu direita -->
+            <ul class="navbar-nav">
+
+                <li class="nav-item">
+                    <a class="nav-link" href="<?= BASE_URL ?>/perfil">
+                        👤 <?= $_SESSION['usuario_nome'] ?? 'Usuário' ?>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="<?= BASE_URL ?>/logout">
+                        Sair
+                    </a>
+                </li>
+
+            </ul>
+
+        </div>
     </div>
 </nav>
-
-<!-- NAVBAR GLOBAL -->
- <nav class="navbar nav" ></nav>
 
 <!-- CONTEÚDO -->
 <div class="container mt-4">
