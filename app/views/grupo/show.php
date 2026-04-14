@@ -205,21 +205,22 @@
                         </td>
                         <td>
                             <?php if (($membro['convite_status'] ?? '') === 'aceito'): ?>
-
+        
                                 <span class="badge bg-success">Ativo</span>
-
-                            <?php elseif (($membro['convite_status'] ?? '') === 'pendente'): ?>
-
-                                <span class="badge bg-warning text-dark">Pendente</span><br>
-                                <a href="<?= BASE_URL ?>/convite?token=<?= $membro['convite_token'] ?>" target="_blank">
-                                    Link Convite
-                                </a>
 
                             <?php else: ?>
 
-                                <span class="badge bg-secondary">Sem status</span>
+                                <span class="badge bg-warning text-dark">Pendente</span>
+
+                                <br>
+
+                                <a href="<?= BASE_URL . '/usuarios/reenviar-convite?usuario_id=' . $membro['id'] ?>"
+                                class="btn btn-sm btn-outline-primary mt-1">
+                                    Reenviar convite
+                                </a>
 
                             <?php endif; ?>
+
                         </td>
                     </tr>
                 <?php endforeach; ?>

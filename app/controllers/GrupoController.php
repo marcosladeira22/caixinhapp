@@ -263,4 +263,41 @@ class GrupoController extends Controller {
         header("Location: " . BASE_URL . "/grupos/" . $grupo_id . "?mes=" . $mes);
         exit;
     }
+
+    // =========================
+    // REENVIAR CONVITE
+    // =========================
+    public function reenviarConvite() {
+        
+        $usuario_id = $_GET['usuario_id'] ?? null;
+
+        if (!$usuario_id) {
+            $_SESSION['erro'] = "Usuário inválido";
+            header("Location: " . BASE_URL . "/dashboard");
+            exit;
+        }
+
+        $usuarioModel = new Usuario($this->db);
+
+        // Gera novo token
+        $token = bin2hex(random_bytes(16));
+
+        // Atualiza usuário
+        $query = "UPDATE usuarios 
+                SET convite_token = :token,
+                    convite_status = 'pendente'
+                WHERE id = :id";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(":token", $token);
+        $stmt->bindParam(":id", $usuario_id);
+        $stmt->execute();
+
+        // (Futuro: envio de e-mail aqui)
+
+        $_SESSION['sucesso'] = "Convite reenviado com sucesso";
+
+        header("Location: " . $_SERVER['HTTP_REFERER']);
+        exit;
+    }
 }

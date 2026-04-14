@@ -119,6 +119,13 @@ switch ($uri) {
     case '/convite/aceitar':
         (new AuthController())->aceitarConvite();
         break;
+
+    case '/usuarios/reenviar-convite':
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+
+        (new GrupoController())->reenviarConvite();
+        break;
         
     default:
         echo "Página não encontrada";
