@@ -8,6 +8,8 @@ require_once __DIR__ . '/../models/GrupoUsuario.php';
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../models/Cota.php';
 require_once __DIR__ . '/../models/Pagamento.php';
+require_once __DIR__ . '/../models/Emprestimo.php';
+require_once __DIR__ . '/../models/RegraEmprestimo.php';
 
 class GrupoController extends Controller {
 
@@ -296,6 +298,66 @@ class GrupoController extends Controller {
         // (Futuro: envio de e-mail aqui)
 
         $_SESSION['sucesso'] = "Convite reenviado com sucesso";
+
+        header("Location: " . $_SERVER['HTTP_REFERER']);
+        exit;
+    }
+
+    // =========================
+    // SOLICTAR EMPRESTIMO
+    // =========================
+    public function solicitarEmprestimo() {
+
+        $grupo_id = $_POST['grupo_id'];
+        $valor = $_POST['valor'];
+
+        // Busca regra
+        $regraModel = new RegraEmprestimo($this->db);
+        $regra = $regraModel->buscarPorGrupo($grupo_id);
+
+        if (!$regra) {
+            $_SESSION['erro'] = "Grupo sem regra de empréstimo";
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            exit;
+        }
+
+        // Validação de limites
+        if ($valor < $regra['valor_minimo'] || $valor > $regra['valor_maximo']) {
+            $_SESSION['erro'] = "Valor fora do permitido";
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            exit;
+        }
+
+        $emprestimoModel = new Emprestimo($this->db);
+
+        // Calcula juros
+        $juros = $emprestimoModel->calcularJurosInicial($valor, $regra);
+
+        $valorTotal = $valor + $juros;
+
+        // Define datas
+        $dataEmprestimo = date('Y-m-d');
+        $dataVencimento = date('Y-m-d', strtotime('+30 days'));
+
+        // INSERT
+        $query = "INSERT INTO emprestimos 
+            (grupo_id, usuario_id, valor, valor_com_juros, juros_inicial, data_emprestimo, data_vencimento, status)
+            VALUES
+            (:grupo_id, :usuario_id, :valor, :valor_total, :juros, :data_emp, :data_venc, 'aberto')";
+
+        $stmt = $this->db->prepare($query);
+
+        $stmt->bindParam(":grupo_id", $grupo_id);
+        $stmt->bindParam(":usuario_id", $_SESSION['usuario_id']);
+        $stmt->bindParam(":valor", $valor);
+        $stmt->bindParam(":valor_total", $valorTotal);
+        $stmt->bindParam(":juros", $juros);
+        $stmt->bindParam(":data_emp", $dataEmprestimo);
+        $stmt->bindParam(":data_venc", $dataVencimento);
+
+        $stmt->execute();
+
+        $_SESSION['sucesso'] = "Empréstimo solicitado com juros aplicado";
 
         header("Location: " . $_SERVER['HTTP_REFERER']);
         exit;
