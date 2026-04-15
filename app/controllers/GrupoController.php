@@ -180,6 +180,16 @@ class GrupoController extends Controller {
             }
         }
 
+        $query = "SELECT SUM(valor_com_juros - valor) 
+                    as lucro FROM emprestimos 
+                    WHERE grupo_id = :grupo_id";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(":grupo_id", $id);
+        $stmt->execute();
+
+        $lucroJuros = $stmt->fetch(PDO::FETCH_ASSOC)['lucro'] ?? 0;
+
         // SALDO REAL DO CAIXA
         $saldoReal = $totalArrecadado 
                     + $totalRecebidoEmprestimos 
@@ -213,7 +223,8 @@ class GrupoController extends Controller {
             'regras'                   => $regras,
             'totalEmprestado'          => $totalEmprestado,
             'totalRecebidoEmprestimos' => $totalRecebidoEmprestimos,
-            'saldoReal'                => $saldoReal
+            'saldoReal'                => $saldoReal,
+            'lucroJuros'               => $lucroJuros
         ]);
     }
 

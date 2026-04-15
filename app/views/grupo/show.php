@@ -96,28 +96,35 @@
         <!-- EMPRÉSTIMOS NO DASH -->
         <div class="row mt-3">
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card p-3 text-center bg-warning">
                     <h6>💸 Emprestado</h6>
                     <h4>R$ <?= number_format($totalEmprestado, 2, ',', '.') ?></h4>
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card p-3 text-center bg-info text-white">
                     <h6>💰 Recebido</h6>
                     <h4>R$ <?= number_format($totalRecebidoEmprestimos, 2, ',', '.') ?></h4>
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card p-3 text-center bg-dark text-white">
                     <h6>📊 Saldo Real</h6>
                     <h4>R$ <?= number_format($saldoReal, 2, ',', '.') ?></h4>
                 </div>
             </div>
 
+            <div class="col-md-3">
+                <div class="card p-3 text-center bg-info-subtle">
+                    <h6>📈 Lucro com Juros</h6>
+                    <h4>R$ <?= number_format($lucroJuros ?? 0, 2, ',', '.') ?></h4>
+                </div>
+            </div>
         </div>
+        
 
         <!-- PAGAMENTOS -->
         <form method="POST" action="<?= BASE_URL ?>/grupos/pagamentos/salvar">

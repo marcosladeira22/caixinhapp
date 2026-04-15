@@ -218,5 +218,76 @@ class Emprestimo {
             }
         }
     }
+
+    // ====================================
+    // APLICA JUROS POR ATRASO AUTOMATICO
+    // ====================================
+    public function aplicarJurosAtrasoAutomatico($grupo_id) {
+
+        $query = "SELECT * FROM emprestimos 
+                WHERE grupo_id = :grupo_id 
+                AND status != 'pago'";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":grupo_id", $grupo_id);
+        $stmt->execute();
+
+        $emprestimos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($emprestimos as $e) {
+
+            $hoje = date('Y-m-d');
+
+            if ($hoje <= $e['data_vencimento']) continue;
+
+            $dias = (strtotime($hoje) - strtotime($e['data_vencimento'])) / 86400;
+
+            // Busca regras
+            $queryRegra = "SELECT * FROM regras_emprestimo WHERE grupo_id = :grupo_id LIMIT 1";
+            $stmtRegra = $this->conn->prepare($queryRegra);
+            $stmtRegra->bindParam(":grupo_id", $grupo_id);
+            $stmtRegra->execute();
+
+            $regra = $stmtRegra->fetch(PDO::FETCH_ASSOC);
+
+            if (!$regra) continue;
+
+            $juros = 0;
+
+            if ($regra['juros_atraso_tipo'] === 'percentual') {
+                $juros = ($e['valor'] * ($regra['juros_atraso_valor'] / 100)) * $dias;
+            } else {
+                $juros = $regra['juros_atraso_valor'] * $dias;
+            }
+
+            $novoValor = $e['valor'] + $juros;
+
+            // Atualiza no banco
+            $update = "UPDATE emprestimos 
+                    SET valor_com_juros = :valor,
+                        status = 'atrasado'
+                    WHERE id = :id";
+
+            $stmtUp = $this->conn->prepare($update);
+            $stmtUp->bindParam(":valor", $novoValor);
+            $stmtUp->bindParam(":id", $e['id']);
+            $stmtUp->execute();
+        }
+    }
+
+    // =================
+    // MARCAR COMO PAGO
+    // =================
+    public function marcarComoPago($id) {
+
+        $query = "UPDATE emprestimos 
+                SET status = 'pago'
+                WHERE id = :id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id", $id);
+
+        return $stmt->execute();
+    }
 }
 ?>

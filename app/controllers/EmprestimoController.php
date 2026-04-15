@@ -20,6 +20,9 @@ class EmprestimoController extends Controller {
         $model = new Emprestimo($this->db);
         $emprestimos = $model->listarPorGrupo($grupo_id);
 
+        $emprestimoModel = new Emprestimo($this->db);
+        $emprestimoModel->aplicarJurosAtrasoAutomatico($grupo_id);
+
         $this->view('emprestimos/index', [
             'emprestimos' => $emprestimos,
             'grupo_id' => $grupo_id
@@ -115,4 +118,16 @@ class EmprestimoController extends Controller {
         header("Location: " . BASE_URL . "/emprestimos?grupo_id=" . $model->grupo_id);
         exit;
     }
+
+    public function pagar() {
+
+        $id = $_GET['id'];
+
+        $model = new Emprestimo($this->db);
+
+        $model->marcarComoPago($id);
+
+        header("Location: " . BASE_URL . "/emprestimos?grupo_id=" . $_GET['grupo_id']);
+        exit;
+}
 }

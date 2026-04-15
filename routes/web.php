@@ -171,6 +171,12 @@ switch ($uri) {
         require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
         (new EmprestimoController())->store();
         break;
+
+    case '/emprestimos/pagar':
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+        (new EmprestimoController())->pagar();
+        break;
         
     default:
         echo "Página não encontrada";
