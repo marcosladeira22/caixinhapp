@@ -182,6 +182,16 @@ class GrupoController extends Controller {
 
         $regras = null;
 
+        require_once __DIR__ . '/../models/Emprestimo.php';
+
+        $emprestimoModel = new Emprestimo($this->db);
+
+        $totalEmprestado = $emprestimoModel->totalEmprestado($id);
+        $totalRecebidoEmprestimos = $emprestimoModel->totalRecebido($id);
+
+        // saldo real do grupo
+        $saldoReal = $totalArrecadado - $totalEmprestado + $totalRecebidoEmprestimos;
+
         $this->view('grupo/show', [
             'titulo'                   => $grupo['nome'],
             'grupo'                    => $grupo,
@@ -195,7 +205,10 @@ class GrupoController extends Controller {
             'totalEmprestado'          => $totalEmprestado,
             'totalRecebidoEmprestimos' => $totalRecebidoEmprestimos,
             'saldoReal'                => $saldoReal,
-            'regras'                   => $regras
+            'regras'                   => $regras,
+            'totalEmprestado'          => $totalEmprestado,
+            'totalRecebidoEmprestimos' => $totalRecebidoEmprestimos,
+            'saldoReal'                => $saldoReal
         ]);
     }
 

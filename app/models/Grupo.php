@@ -73,6 +73,21 @@ class Grupo {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // BUSCAR MEMBROS DO GRUPO
+    public function buscarMembros($grupo_id) {
+
+        $query = "SELECT u.id, u.nome, u.email
+                FROM grupo_usuarios gu
+                INNER JOIN usuarios u ON u.id = gu.usuario_id
+                WHERE gu.grupo_id = :grupo_id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":grupo_id", $grupo_id);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 }
 
 ?>

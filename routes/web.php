@@ -150,6 +150,27 @@ switch ($uri) {
         require_once __DIR__ . '/../app/controllers/RegraController.php';
         (new RegraController())->store();
         break;
+
+    case '/emprestimos':
+        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
+        (new EmprestimoController())->index();
+        break;
+
+    case '/emprestimos/create':
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+
+        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
+        (new EmprestimoController())->create();
+        break;
+
+    case '/emprestimos/store':
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+
+        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
+        (new EmprestimoController())->store();
+        break;
         
     default:
         echo "Página não encontrada";

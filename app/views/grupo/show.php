@@ -34,8 +34,8 @@
                 💰 Cotas
             </a>
 
-            <a href="<?= BASE_URL ?>/grupos/<?= $grupo['id'] ?>?aba=emprestimos"
-               class="btn <?= $aba === 'emprestimos' ? 'btn-warning' : 'btn-outline-warning' ?>">
+            <a href="<?= BASE_URL ?>/emprestimos?grupo_id=<?= $grupo['id'] ?>" 
+                class="btn btn-outline-warning">
                 💸 Empréstimos
             </a>
 
@@ -132,8 +132,8 @@
                         <thead>
                             <tr>
                                 <th>Usuário</th>
-                                <th>Status</th>
-                                <th>Pago</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Pago</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -148,14 +148,14 @@
                                         <small><?= $membro['email'] ?></small>
                                     </td>
 
-                                    <td>
+                                    <td class="text-center">
                                         <select name="pagamentos[<?= $membro['id'] ?>]" class="form-select">
                                             <option value="pendente" <?= $status === 'pendente' ? 'selected' : '' ?>>Pendente</option>
                                             <option value="pago" <?= $status === 'pago' ? 'selected' : '' ?>>Pago</option>
                                         </select>
                                     </td>
 
-                                    <td>
+                                    <td class="text-center">
                                         R$ <?= number_format($valor, 2, ',', '.') ?>
                                     </td>
                                 </tr>
@@ -214,7 +214,7 @@
                                     <td class="text-center">
                                         <input type="number"
                                                name="cotas[<?= $membro['id'] ?>]"
-                                               class="form-control"
+                                               class="form-control text-center"
                                                value="<?= $qtd ?>">
                                     </td>
 
@@ -326,25 +326,31 @@
     <!-- ========================= -->
     <div class="card p-3 mt-4">
         <h5>➕ Adicionar Membro</h5>
+        <hr>
         <form method="POST" action="<?= BASE_URL ?>/grupos/adicionar-membro">
             <input type="hidden" name="grupo_id" value="<?= $grupo['id'] ?>">
-            <div class="row">
+            <div class="row text-center">
                 <div class="col-md-3">
+                    <label for="" class="form-label fw-bold">Nome</label>
                     <input type="text" name="nome" class="form-control" placeholder="Nome" required>
                 </div>
                 <div class="col-md-3">
+                    <label for="" class="form-label fw-bold">E-mail</label>
                     <input type="email" name="email" class="form-control" placeholder="E-mail" required>
                 </div>
                 <div class="col-md-2">
+                    <label for="" class="form-label fw-bold">Nível</label>
                     <select name="nivel" class="form-select">
                         <option value="membro">Membro</option>
                         <option value="admin">Admin</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <input type="number" name="cotas" class="form-control" value="1">
+                    <label for="" class="form-label fw-bold">Cotas</label>
+                    <input type="number" name="cotas" class="form-control text-center" value="1">
                 </div>
                 <div class="col-md-2">
+                    <label for="" class="form-label fw-bold">Convite</label>
                     <select name="enviar_convite" class="form-select">
                         <option value="0">Sem convite</option>
                         <option value="1">Enviar convite</option>

@@ -121,5 +121,37 @@ class Emprestimo {
 
         return $stmt->execute();
     }
+
+    // ====================================
+    // TOTAL EMPRESTADO (dinheiro que saiu)
+    // ====================================
+    public function totalEmprestado($grupo_id) {
+
+        $query = "SELECT SUM(valor) as total 
+                FROM emprestimos 
+                WHERE grupo_id = :grupo_id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":grupo_id", $grupo_id);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+    }
+
+    // ====================================
+    // TOTAL RECEBIDO (empréstimos pagos)
+    // ====================================
+    public function totalRecebido($grupo_id) {
+
+        $query = "SELECT SUM(valor_com_juros) as total 
+                FROM emprestimos 
+                WHERE grupo_id = :grupo_id AND status = 'pago'";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":grupo_id", $grupo_id);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+    }
 }
 ?>
