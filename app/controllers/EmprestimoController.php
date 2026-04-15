@@ -45,6 +45,41 @@ class EmprestimoController extends Controller {
     // SALVAR EMPRÉSTIMO
     public function store() {
 
+        require_once __DIR__ . '/../models/RegraEmprestimo.php';
+
+        $regraModel = new RegraEmprestimo($this->db);
+        $regra = $regraModel->buscarPorGrupo($_POST['grupo_id']);
+
+        $valor = $_POST['valor'];
+
+        if ($regra) {
+
+            if ($valor < $regra['valor_minimo']) {
+                $_SESSION['erro'] = "Valor abaixo do mínimo permitido";
+                header("Location: " . BASE_URL . "/emprestimos/create?grupo_id=" . $_POST['grupo_id']);
+                exit;
+            }
+
+            if ($valor > $regra['valor_maximo']) {
+                $_SESSION['erro'] = "Valor acima do máximo permitido";
+                header("Location: " . BASE_URL . "/emprestimos/create?grupo_id=" . $_POST['grupo_id']);
+                exit;
+            }
+
+        }
+
+        $juros = 0;
+
+        if ($regra) {
+
+            // JUROS INICIAL
+            if ($regra['juros_inicial_tipo'] === 'percentual') {
+                $juros = ($valor * $regra['juros_inicial_valor']) / 100;
+            } else {
+                $juros = $regra['juros_inicial_valor'];
+            }
+        }
+
         $model = new Emprestimo($this->db);
 
         $model->grupo_id = $_POST['grupo_id'];
@@ -53,9 +88,8 @@ class EmprestimoController extends Controller {
         $model->data_emprestimo = $_POST['data_emprestimo'];
         $model->data_vencimento = $_POST['data_vencimento'];
 
-        // 💡 TEMPORÁRIO (na fase 7.3 vamos calcular automático)
-        $model->juros_inicial = 0;
-        $model->valor_com_juros = $model->valor;
+        $model->juros_inicial = $juros;
+        $model->valor_com_juros = $valor + $juros;
 
         $model->criar();
 
