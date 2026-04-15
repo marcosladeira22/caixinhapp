@@ -1,5 +1,7 @@
 <h4>💸 Regras de Empréstimo</h4>
 
+
+
 <form method="POST" action="<?= BASE_URL ?>/regras/salvar">
 
     <input type="hidden" name="grupo_id" value="<?= $grupo_id ?>">

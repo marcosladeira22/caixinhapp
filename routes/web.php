@@ -130,13 +130,25 @@ switch ($uri) {
     case '/regras':
         require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
         AuthMiddleware::verificar();
-        (new GrupoController())->regras();
+
+        require_once __DIR__ . '/../app/controllers/RegraController.php';
+        (new RegraController())->index();
         break;
 
-    case '/regras/salvar':
+    case '/regras/create':
         require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
         AuthMiddleware::verificar();
-        (new GrupoController())->salvarRegras();
+
+        require_once __DIR__ . '/../app/controllers/RegraController.php';
+        (new RegraController())->create();
+        break;
+
+    case '/regras/store':
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+
+        require_once __DIR__ . '/../app/controllers/RegraController.php';
+        (new RegraController())->store();
         break;
         
     default:

@@ -156,16 +156,46 @@ class GrupoController extends Controller {
             ? ($totalArrecadado / $totalEsperado) * 100
             : 0;
 
+        $emprestimoModel = new Emprestimo($this->db);
+        $emprestimos = $emprestimoModel->listarPorGrupo($id);
+
+        $totalEmprestado = 0;
+        $totalRecebidoEmprestimos = 0;
+
+        foreach ($emprestimos as $e) {
+
+            // Total emprestado (dinheiro saiu)
+            if ($e['status'] === 'aberto' || $e['status'] === 'atrasado') {
+                $totalEmprestado += $e['valor'];
+            }
+
+            // Total já pago (dinheiro voltou)
+            if ($e['status'] === 'pago') {
+                $totalRecebidoEmprestimos += $e['valor_com_juros'];
+            }
+        }
+
+        // SALDO REAL DO CAIXA
+        $saldoReal = $totalArrecadado 
+                    + $totalRecebidoEmprestimos 
+                    - $totalEmprestado;
+
+        $regras = null;
+
         $this->view('grupo/show', [
-            'titulo' => $grupo['nome'],
-            'grupo' => $grupo,
-            'membros' => $membros,
-            'cotasMap' => $cotasMap,
-            'pagamentosMap' => $pagamentosMap,
-            'mesAtual' => $mesAtual,
-            'totalArrecadado' => $totalArrecadado,
-            'totalPendente' => $totalPendente,
-            'percentualPago' => $percentualPago
+            'titulo'                   => $grupo['nome'],
+            'grupo'                    => $grupo,
+            'membros'                  => $membros,
+            'cotasMap'                 => $cotasMap,
+            'pagamentosMap'            => $pagamentosMap,
+            'mesAtual'                 => $mesAtual,
+            'totalArrecadado'          => $totalArrecadado,
+            'totalPendente'            => $totalPendente,
+            'percentualPago'           => $percentualPago,
+            'totalEmprestado'          => $totalEmprestado,
+            'totalRecebidoEmprestimos' => $totalRecebidoEmprestimos,
+            'saldoReal'                => $saldoReal,
+            'regras'                   => $regras
         ]);
     }
 
