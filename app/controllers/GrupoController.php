@@ -88,6 +88,11 @@ class GrupoController extends Controller {
     // =========================
     public function show($id) {
 
+        require_once __DIR__ . '/../models/Emprestimo.php';
+
+        $emprestimoModel = new Emprestimo($this->db);
+        $emprestimoModel->atualizarStatusEJuros($id);
+
         $grupoModel = new Grupo($this->db);
         $grupoUsuario = new GrupoUsuario($this->db);
 

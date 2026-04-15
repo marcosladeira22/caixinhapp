@@ -8,29 +8,81 @@
         + Novo Empréstimo
     </a>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Usuário</th>
-                <th>Valor</th>
-                <th>Com Juros</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-light text-center">
+                <tr>
+                    <th>Usuário</th>
+                    <th>Valor</th>
+                    <th>Com Juros</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Dias Atraso</th>
+                </tr>
+            </thead>
 
-        <?php foreach($emprestimos as $e): ?>
+            <tbody>
 
-            <tr>
-                <td><?= $e['nome'] ?></td>
-                <td>R$ <?= number_format($e['valor'], 2, ',', '.') ?></td>
-                <td>R$ <?= number_format($e['valor_com_juros'], 2, ',', '.') ?></td>
-                <td><?= $e['status'] ?></td>
-            </tr>
+            <?php foreach($emprestimos as $e): ?>
 
-        <?php endforeach; ?>
+                <?php
+                    $diasAtraso = 0;
 
-        </tbody>
-    </table>
+                    if ($e['status'] !== 'pago') {
+                        $hoje = date('Y-m-d');
+
+                        if ($hoje > $e['data_vencimento']) {
+                            $diasAtraso = (strtotime($hoje) - strtotime($e['data_vencimento'])) / 86400;
+                        }
+                    }
+                ?>
+
+                <tr>
+                    <td>
+                        <strong><?= $e['nome'] ?></strong>
+                    </td>
+
+                    <td>
+                        R$ <?= number_format($e['valor'], 2, ',', '.') ?>
+                    </td>
+
+                    <td>
+                        <strong>
+                            R$ <?= number_format($e['valor_com_juros'], 2, ',', '.') ?>
+                        </strong>
+                    </td>
+
+                    <td class="text-center">
+                        <?= date('d/m/Y', strtotime($e['data_vencimento'])) ?>
+                    </td>
+
+                    <td class="text-center">
+                        <?php if ($e['status'] === 'aberto'): ?>
+                            <span class="badge bg-primary">Aberto</span>
+
+                        <?php elseif ($e['status'] === 'atrasado'): ?>
+                            <span class="badge bg-danger">Atrasado</span>
+
+                        <?php else: ?>
+                            <span class="badge bg-success">Pago</span>
+                        <?php endif; ?>
+                    </td>
+
+                    <td class="text-center">
+                        <?php if ($diasAtraso > 0): ?>
+                            <span class="badge bg-danger">
+                                <?= (int)$diasAtraso ?> dias
+                            </span>
+                        <?php else: ?>
+                            <span class="text-muted">—</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+
+            <?php endforeach; ?>
+
+            </tbody>
+        </table>
+    </div>
 
 </div>

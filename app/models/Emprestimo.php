@@ -153,5 +153,70 @@ class Emprestimo {
 
         return $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
     }
+
+    // ====================================
+    // ATUALIZA STATUS E JUROS POR ATRASO
+    // ====================================
+    public function atualizarStatusEJuros($grupo_id) {
+
+        // Buscar regras
+        require_once __DIR__ . '/RegraEmprestimo.php';
+        $regraModel = new RegraEmprestimo($this->conn);
+
+        $regra = $regraModel->buscarPorGrupo($grupo_id);
+
+        if (!$regra) return;
+
+        // Buscar empréstimos em aberto
+        $query = "SELECT * FROM emprestimos 
+                WHERE grupo_id = :grupo_id 
+                AND status = 'aberto'";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":grupo_id", $grupo_id);
+        $stmt->execute();
+
+        $emprestimos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($emprestimos as $e) {
+
+            $hoje = date('Y-m-d');
+            $vencimento = $e['data_vencimento'];
+
+            // Calcula dias de atraso
+            $diasAtraso = (strtotime($hoje) - strtotime($vencimento)) / (60 * 60 * 24);
+
+            // Considera tolerância
+            if ($diasAtraso > $regra['dias_tolerancia']) {
+
+                $diasAtraso -= $regra['dias_tolerancia'];
+
+                $jurosAtraso = 0;
+
+                // JUROS POR ATRASO
+                if ($regra['juros_atraso_tipo'] === 'percentual') {
+
+                    $jurosAtraso = ($e['valor'] * $regra['juros_atraso_valor'] / 100) * $diasAtraso;
+
+                } else {
+
+                    $jurosAtraso = $regra['juros_atraso_valor'] * $diasAtraso;
+                }
+
+                $novoValor = $e['valor_com_juros'] + $jurosAtraso;
+
+                // Atualiza no banco
+                $update = "UPDATE emprestimos 
+                        SET status = 'atrasado',
+                            valor_com_juros = :valor
+                        WHERE id = :id";
+
+                $up = $this->conn->prepare($update);
+                $up->bindParam(":valor", $novoValor);
+                $up->bindParam(":id", $e['id']);
+                $up->execute();
+            }
+        }
+    }
 }
 ?>

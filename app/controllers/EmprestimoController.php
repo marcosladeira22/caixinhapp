@@ -47,6 +47,24 @@ class EmprestimoController extends Controller {
 
         require_once __DIR__ . '/../models/RegraEmprestimo.php';
 
+        // Verifica se usuário já tem dívida aberta
+        $query = "SELECT COUNT(*) as total 
+                FROM emprestimos 
+                WHERE usuario_id = :usuario_id 
+                AND status IN ('aberto','atrasado')";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(":usuario_id", $_POST['usuario_id']);
+        $stmt->execute();
+
+        $temDivida = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        if ($temDivida > 0) {
+            $_SESSION['erro'] = "Usuário já possui empréstimo em aberto";
+            header("Location: " . BASE_URL . "/emprestimos/create?grupo_id=" . $_POST['grupo_id']);
+            exit;
+        }
+
         $regraModel = new RegraEmprestimo($this->db);
         $regra = $regraModel->buscarPorGrupo($_POST['grupo_id']);
 
@@ -79,6 +97,7 @@ class EmprestimoController extends Controller {
                 $juros = $regra['juros_inicial_valor'];
             }
         }
+
 
         $model = new Emprestimo($this->db);
 
