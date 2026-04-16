@@ -88,22 +88,22 @@ class GrupoController extends Controller {
     // =========================
     public function show($id) {
 
-        require_once __DIR__ . '/../models/Emprestimo.php';
-
         $emprestimoModel = new Emprestimo($this->db);
-        $emprestimoModel->atualizarStatusEJuros($id);
+
+        // 🔥 Atualiza juros e status antes de calcular tudo
+        $emprestimoModel->aplicarJurosAtrasoAutomatico($id);
 
         $grupoModel = new Grupo($this->db);
         $grupoUsuario = new GrupoUsuario($this->db);
 
-        // Verifica acesso
+        // 🔐 Verifica acesso
         if (!$grupoUsuario->usuarioPertence($id, $_SESSION['usuario_id'])) {
             $_SESSION['erro'] = "Sem acesso ao grupo";
             header("Location: " . BASE_URL . "/dashboard");
             exit;
         }
 
-        // Dados do grupo
+        // 📦 Dados do grupo
         $grupo = $grupoModel->buscarPorId($id);
 
         if (!$grupo) {
@@ -112,10 +112,10 @@ class GrupoController extends Controller {
             exit;
         }
 
-        // Membros
+        // 👥 Membros
         $membros = $grupoUsuario->listarMembros($id);
 
-        // Cotas
+        // 💰 Cotas
         $cotaModel = new Cota($this->db);
         $cotas = $cotaModel->listarPorGrupo($id);
 
@@ -124,7 +124,7 @@ class GrupoController extends Controller {
             $cotasMap[$c['usuario_id']] = $c['quantidade'];
         }
 
-        // Pagamentos
+        // 📅 Pagamentos
         $mesAtual = $_GET['mes'] ?? date('Y-m-01');
 
         $pagamentoModel = new Pagamento($this->db);
@@ -138,7 +138,9 @@ class GrupoController extends Controller {
             ];
         }
 
-        // DASHBOARD FINANCEIRO
+        // =========================
+        // 💸 DASHBOARD FINANCEIRO
+        // =========================
         $totalEsperado = 0;
         $totalArrecadado = 0;
 
@@ -161,51 +163,46 @@ class GrupoController extends Controller {
             ? ($totalArrecadado / $totalEsperado) * 100
             : 0;
 
-        $emprestimoModel = new Emprestimo($this->db);
+        // =========================
+        // 💳 EMPRÉSTIMOS (CORRIGIDO)
+        // =========================
+
         $emprestimos = $emprestimoModel->listarPorGrupo($id);
 
-        $totalEmprestado = 0;
-        $totalRecebidoEmprestimos = 0;
+        $totalEmprestado = 0;              // dinheiro que saiu
+        $totalRecebidoEmprestimos = 0;     // dinheiro que voltou
+        $saldoEmprestimosAberto = 0;       // dívida atual
+        $lucroJuros = 0;                   // lucro total
 
         foreach ($emprestimos as $e) {
 
-            // Total emprestado (dinheiro saiu)
-            if ($e['status'] === 'aberto' || $e['status'] === 'atrasado') {
-                $totalEmprestado += $e['valor'];
-            }
+            // 💸 soma valor base emprestado
+            $totalEmprestado += $e['valor'];
 
-            // Total já pago (dinheiro voltou)
+            // 💰 calcula lucro total (TUDO que excede o valor base)
+            $lucroJuros += ($e['valor_com_juros'] - $e['valor']);
+
             if ($e['status'] === 'pago') {
+
+                // 💵 já entrou no caixa
                 $totalRecebidoEmprestimos += $e['valor_com_juros'];
+
+            } else {
+
+                // 🔥 dívida atual REAL (com juros e atraso)
+                $saldoEmprestimosAberto += $e['valor_com_juros'];
             }
         }
 
-        $query = "SELECT SUM(valor_com_juros - valor) 
-                    as lucro FROM emprestimos 
-                    WHERE grupo_id = :grupo_id";
+        // =========================
+        // 🧠 SALDO REAL (CORRIGIDO)
+        // =========================
 
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(":grupo_id", $id);
-        $stmt->execute();
-
-        $lucroJuros = $stmt->fetch(PDO::FETCH_ASSOC)['lucro'] ?? 0;
-
-        // SALDO REAL DO CAIXA
         $saldoReal = $totalArrecadado 
-                    + $totalRecebidoEmprestimos 
-                    - $totalEmprestado;
+            + $totalRecebidoEmprestimos 
+            - $saldoEmprestimosAberto;
 
-        $regras = null;
-
-        require_once __DIR__ . '/../models/Emprestimo.php';
-
-        $emprestimoModel = new Emprestimo($this->db);
-
-        $totalEmprestado = $emprestimoModel->totalEmprestado($id);
-        $totalRecebidoEmprestimos = $emprestimoModel->totalRecebido($id);
-
-        // saldo real do grupo
-        $saldoReal = $totalArrecadado - $totalEmprestado + $totalRecebidoEmprestimos;
+        // 🚫 REMOVIDO BUG (não subtrair duas vezes)
 
         $this->view('grupo/show', [
             'titulo'                   => $grupo['nome'],
@@ -217,10 +214,6 @@ class GrupoController extends Controller {
             'totalArrecadado'          => $totalArrecadado,
             'totalPendente'            => $totalPendente,
             'percentualPago'           => $percentualPago,
-            'totalEmprestado'          => $totalEmprestado,
-            'totalRecebidoEmprestimos' => $totalRecebidoEmprestimos,
-            'saldoReal'                => $saldoReal,
-            'regras'                   => $regras,
             'totalEmprestado'          => $totalEmprestado,
             'totalRecebidoEmprestimos' => $totalRecebidoEmprestimos,
             'saldoReal'                => $saldoReal,

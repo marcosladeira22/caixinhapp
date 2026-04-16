@@ -20,10 +20,21 @@
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label class="form-label fw-bold">Valor</label>
-                <input type="number" step="0.01" name="valor" class="form-control" required>
+                <input type="number" step="0.01" name="valor" id="valor" class="form-control" required>
             </div>
             <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Valor com juros (estimado)</label>
+                <label class="form-label fw-bold">Valor com juros (estimado)
+                    <small class="text-muted">
+                        Juros inicial: 
+                        <strong>
+                            <?= isset($regra) && $regra['juros_inicial_tipo'] === 'percentual'
+                                ? $regra['juros_inicial_valor'] . '%'
+                                : 'R$ ' . number_format($regra['juros_inicial_valor'] ?? 0, 2, ',', '.')
+                            ?>
+                        </strong>
+                    </small>
+                </label>
+                
                 <input type="text" id="preview" class="form-control" disabled>
             </div>
         </div>
@@ -53,16 +64,25 @@
 
 </div>
 <script>
-    document.querySelector('[name="valor"]').addEventListener('input', function() {
+    document.getElementById('valor').addEventListener('input', function() {
 
         let valor = parseFloat(this.value) || 0;
 
-        // Simulação simples (ex: 10%)
-        let juros = valor * 0.1;
+        let tipo = "<?= $regra['juros_inicial_tipo'] ?? 'percentual' ?>";
+        let taxa = parseFloat("<?= $regra['juros_inicial_valor'] ?? 0 ?>");
 
-        let total = valor + juros;
+        let total = 0;
 
-        document.getElementById('preview').value = 
-            total.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        if (tipo === 'percentual') {
+            total = valor + (valor * (taxa / 100));
+        } else {
+            total = valor + taxa;
+        }
+
+        document.getElementById('preview').value =
+            total.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
     });
 </script>

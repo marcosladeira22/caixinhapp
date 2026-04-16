@@ -153,26 +153,48 @@ switch ($uri) {
 
     case '/emprestimos':
         require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
         (new EmprestimoController())->index();
         break;
 
     case '/emprestimos/create':
+        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
         require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
         AuthMiddleware::verificar();
-
-        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
         (new EmprestimoController())->create();
         break;
 
     case '/emprestimos/store':
+        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
         require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
         AuthMiddleware::verificar();
-
-        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
         (new EmprestimoController())->store();
         break;
 
+    case '/emprestimos/edit':
+        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+        (new EmprestimoController())->edit();
+        break;
+
+    case '/emprestimos/update':
+        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+        (new EmprestimoController())->update();
+        break;
+
+    case '/emprestimos/delete':
+        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
+        require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+        AuthMiddleware::verificar();
+        (new EmprestimoController())->delete();
+        break;
+
     case '/emprestimos/pagar':
+        require_once __DIR__ . '/../app/controllers/EmprestimoController.php';
         require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
         AuthMiddleware::verificar();
         (new EmprestimoController())->pagar();
