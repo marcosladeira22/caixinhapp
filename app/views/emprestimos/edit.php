@@ -10,6 +10,7 @@
             </a>
         </div>
     </div>
+    <hr>
     <form method="POST" action="<?= BASE_URL ?>/emprestimos/update">
         <input type="hidden" name="id" value="<?= $emprestimo['id'] ?>">
         <div class="mb-3">

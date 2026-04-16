@@ -13,7 +13,7 @@
             ← Voltar
         </a>
     </div>
-
+    <hr>
     <!-- INFO -->
     <div class="card p-3 mt-3">
         <strong>💰 Valor da cota:</strong>
@@ -34,10 +34,10 @@
                 💰 Cotas
             </a>
 
-            <a href="<?= BASE_URL ?>/emprestimos?grupo_id=<?= $grupo['id'] ?>" 
-    class="btn btn-outline-warning">
-    💸 Empréstimos
-</a>
+            <a href="<?= BASE_URL ?>/grupos/<?= $grupo['id'] ?>?aba=emprestimos"
+            class="btn <?= $aba === 'emprestimos' ? 'btn-warning' : 'btn-outline-warning' ?>">
+                💸 Empréstimos
+            </a>
 
             <a href="<?= BASE_URL ?>/grupos/<?= $grupo['id'] ?>?aba=regras"
                class="btn <?= $aba === 'regras' ? 'btn-dark' : 'btn-outline-dark' ?>">
@@ -261,21 +261,40 @@
     <!-- 💸 ABA EMPRÉSTIMOS -->
     <!-- ========================= -->
     <?php if ($aba === 'emprestimos'): ?>
-
         <div class="card mt-4 p-3">
-            <h5>💸 Empréstimos</h5>
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h5>💸 Empréstimos <small class="text-muted" style="font-size: 0.8em;">(Últimos 5)</small></h5>
+                </div>
+                <?php if (empty($emprestimos)): ?>    
+                    <div>
+                        <a href="<?= BASE_URL ?>/emprestimos/create?grupo_id=<?= $grupo['id'] ?>" 
+                            class="btn btn-primary mb-3">
+                            + Novo Empréstimo
+                        </a>
+                    </div>
+                <?php else: ?>
+                    <div>
+                        <a href="<?= BASE_URL ?>/emprestimos?grupo_id=<?= $grupo['id'] ?>" 
+                            class="btn btn-primary mb-3">
+                            Ver totdos
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
             
             <?php if (empty($emprestimos)): ?>
                 <p>Nenhum empréstimo</p>
             <?php else: ?>
 
-                <table class="table">
-                    <thead>
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light text-center">
                         <tr>
                             <th>Usuário</th>
                             <th>Valor</th>
                             <th>Com Juros</th>
                             <th>Status</th>
+                            <th>Ação</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -283,18 +302,35 @@
                         <?php foreach($emprestimos as $e): ?>
                             <tr>
                                 <td><?= $e['nome'] ?></td>
-                                <td>R$ <?= number_format($e['valor'], 2, ',', '.') ?></td>
-                                <td>R$ <?= number_format($e['valor_com_juros'], 2, ',', '.') ?></td>
-                                <td><?= $e['status'] ?></td>
+                                <td class="text-center">R$ <?= number_format($e['valor'], 2, ',', '.') ?></td>
+                                <td class="text-center">R$ <?= number_format($e['valor_com_juros'], 2, ',', '.') ?></td>
+                                <td class="text-center">
+                                    <?php if ($e['status'] === 'aberto'): ?>
+                                        <span class="badge bg-primary">Aberto</span>
+                                    <?php elseif ($e['status'] === 'atrasado'): ?>
+                                        <span class="badge bg-danger">Atrasado</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-success">Pago</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-center">
+                                    <a href="<?= BASE_URL ?>/emprestimos/edit?id=<?= $e['id'] ?>&grupo_id=<?= $grupo['id'] ?>"
+                                            class="btn btn-sm btn-warning">✏️</a>
+
+                                    <a href="<?= BASE_URL ?>/emprestimos/pagar?id=<?= $e['id'] ?>&grupo_id=<?= $grupo['id'] ?>"
+                                            class="btn btn-sm btn-success">✔</a>
+
+                                    <a href="<?= BASE_URL ?>/emprestimos/delete?id=<?= $e['id'] ?>&grupo_id=<?= $grupo['id'] ?>"
+                                            class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Excluir empréstimo?')">🗑
+                                    </a>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
-
                     </tbody>
                 </table>
-
             <?php endif; ?>
         </div>
-
     <?php endif; ?>
 
 

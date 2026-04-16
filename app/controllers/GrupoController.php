@@ -171,7 +171,9 @@ class GrupoController extends Controller {
         // 💳 EMPRÉSTIMOS (CORRIGIDO)
         // =========================
 
-        $emprestimos = $emprestimoModel->listarPorGrupo($id);
+        $emprestimos = array_slice(
+                        $emprestimoModel->listarPorGrupo($id),0,5
+                    );
 
         $totalEmprestado = 0;              // dinheiro que saiu
         $totalRecebidoEmprestimos = 0;     // dinheiro que voltou
@@ -222,7 +224,8 @@ class GrupoController extends Controller {
             'totalRecebidoEmprestimos' => $totalRecebidoEmprestimos,
             'saldoReal'                => $saldoReal,
             'lucroJuros'               => $lucroJuros,
-            'regras'                   => $regras
+            'regras'                   => $regras,
+            'emprestimos'              => $emprestimos
         ]);
     }
 
