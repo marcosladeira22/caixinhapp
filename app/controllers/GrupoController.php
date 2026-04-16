@@ -88,11 +88,14 @@ class GrupoController extends Controller {
     // =========================
     public function show($id) {
 
+        // 💸 MODEL EMPRÉSTIMO
         $emprestimoModel = new Emprestimo($this->db);
 
-        // 🔥 Atualiza juros e status antes de calcular tudo
+        // 🔥 Atualiza juros e status automaticamente (atraso)
         $emprestimoModel->aplicarJurosAtrasoAutomatico($id);
 
+
+        // 📦 MODELS BASE
         $grupoModel = new Grupo($this->db);
         $grupoUsuario = new GrupoUsuario($this->db);
 
@@ -100,14 +103,16 @@ class GrupoController extends Controller {
         $regraModel = new RegraEmprestimo($this->db);
         $regras = $regraModel->buscarPorGrupo($id);
 
-        // 🔐 Verifica acesso
+
+        // 🔐 VALIDAÇÃO DE ACESSO
         if (!$grupoUsuario->usuarioPertence($id, $_SESSION['usuario_id'])) {
             $_SESSION['erro'] = "Sem acesso ao grupo";
             header("Location: " . BASE_URL . "/dashboard");
             exit;
         }
 
-        // 📦 Dados do grupo
+
+        // 📦 DADOS DO GRUPO
         $grupo = $grupoModel->buscarPorId($id);
 
         if (!$grupo) {
@@ -116,24 +121,29 @@ class GrupoController extends Controller {
             exit;
         }
 
-        // 👥 Membros
+
+        // 👥 MEMBROS
         $membros = $grupoUsuario->listarMembros($id);
 
-        // 💰 Cotas
+
+        // 💰 COTAS
         $cotaModel = new Cota($this->db);
         $cotas = $cotaModel->listarPorGrupo($id);
 
+        // 🔄 Mapeia cotas por usuário
         $cotasMap = [];
         foreach ($cotas as $c) {
             $cotasMap[$c['usuario_id']] = $c['quantidade'];
         }
 
-        // 📅 Pagamentos
+
+        // 📅 PAGAMENTOS
         $mesAtual = $_GET['mes'] ?? date('Y-m-01');
 
         $pagamentoModel = new Pagamento($this->db);
         $pagamentos = $pagamentoModel->listarPorMes($id, $mesAtual);
 
+        // 🔄 Mapeia pagamentos
         $pagamentosMap = [];
         foreach ($pagamentos as $p) {
             $pagamentosMap[$p['usuario_id']] = [
@@ -142,18 +152,19 @@ class GrupoController extends Controller {
             ];
         }
 
-        // =========================
-        // 💸 DASHBOARD FINANCEIRO
-        // =========================
+
+        // 💸 DASHBOARD FINANCEIRO (COTAS)
         $totalEsperado = 0;
         $totalArrecadado = 0;
 
         foreach ($cotasMap as $usuario_id => $qtd) {
 
+            // 💰 valor esperado por usuário
             $valor = $qtd * $grupo['valor_cota'];
 
             $totalEsperado += $valor;
 
+            // 💵 se pagou, soma no arrecadado
             if (isset($pagamentosMap[$usuario_id]) &&
                 $pagamentosMap[$usuario_id]['status'] === 'pago') {
 
@@ -161,55 +172,65 @@ class GrupoController extends Controller {
             }
         }
 
+        // 📊 indicadores
         $totalPendente = $totalEsperado - $totalArrecadado;
 
         $percentualPago = $totalEsperado > 0
             ? ($totalArrecadado / $totalEsperado) * 100
             : 0;
 
-        // =========================
-        // 💳 EMPRÉSTIMOS (CORRIGIDO)
-        // =========================
 
-        $emprestimos = array_slice(
-                        $emprestimoModel->listarPorGrupo($id),0,5
-                    );
+        // 💳 EMPRÉSTIMOS
+        // 🔥 BUSCA TODOS (IMPORTANTE PARA CÁLCULO)
+        $emprestimos = $emprestimoModel->listarPorGrupo($id);
 
+        // 👀 APENAS 5 PARA EXIBIÇÃO
+        $ultimosEmprestimos = array_slice($emprestimos, 0, 5);
+
+
+        // 📊 Variáveis financeiras
         $totalEmprestado = 0;              // dinheiro que saiu
         $totalRecebidoEmprestimos = 0;     // dinheiro que voltou
-        $saldoEmprestimosAberto = 0;       // dívida atual
+        $saldoEmprestimosAberto = 0;       // dívida atual (em aberto)
         $lucroJuros = 0;                   // lucro total
+
 
         foreach ($emprestimos as $e) {
 
-            // 💸 soma valor base emprestado
+            // 💸 soma valor emprestado (base)
             $totalEmprestado += $e['valor'];
 
-            // 💰 calcula lucro total (TUDO que excede o valor base)
+            // 📈 lucro = tudo que excede o valor original
             $lucroJuros += ($e['valor_com_juros'] - $e['valor']);
 
             if ($e['status'] === 'pago') {
 
-                // 💵 já entrou no caixa
+                // 💰 já entrou no caixa
                 $totalRecebidoEmprestimos += $e['valor_com_juros'];
 
             } else {
 
-                // 🔥 dívida atual REAL (com juros e atraso)
+                // 🔥 valor REAL que ainda está na rua
                 $saldoEmprestimosAberto += $e['valor_com_juros'];
             }
         }
 
-        // =========================
-        // 🧠 SALDO REAL (CORRIGIDO)
-        // =========================
 
-        $saldoReal = $totalArrecadado 
-            + $totalRecebidoEmprestimos 
-            - $saldoEmprestimosAberto;
+        // 🧠 SALDO REAL (REGRA CORRETA)
+        // 💡 saldo real = dinheiro que ainda está emprestado (em aberto)
+        $saldoReal = 0;
 
-        // 🚫 REMOVIDO BUG (não subtrair duas vezes)
+        foreach ($emprestimos as $e) {
 
+            if ($e['status'] !== 'pago') {
+
+                // 🔻 subtrai tudo que ainda não voltou
+                $saldoReal -= $e['valor_com_juros'];
+            }
+        }
+
+
+        // 🚀 RENDER VIEW
         $this->view('grupo/show', [
             'titulo'                   => $grupo['nome'],
             'grupo'                    => $grupo,
@@ -225,7 +246,7 @@ class GrupoController extends Controller {
             'saldoReal'                => $saldoReal,
             'lucroJuros'               => $lucroJuros,
             'regras'                   => $regras,
-            'emprestimos'              => $emprestimos
+            'emprestimos'              => $ultimosEmprestimos // 👈 só os 5 últimos na tela
         ]);
     }
 

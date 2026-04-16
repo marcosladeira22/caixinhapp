@@ -90,12 +90,16 @@
                     <h4><?= number_format($percentualPago, 2, ',', '.') ?>%</h4>
                 </div>
             </div>
-
         </div>
+        <br>
 
         <!-- EMPRÉSTIMOS NO DASH -->
+        <div class="d-flex align-items-center my-4">
+            <div class="flex-grow-1 border-bottom"></div>
+            <span class="mx-3 fw-bold text-secondary">Empréstimos</span>
+            <div class="flex-grow-1 border-bottom"></div>
+        </div>
         <div class="row mt-3">
-
             <div class="col-md-3">
                 <div class="card p-3 text-center bg-warning">
                     <h6>💸 Emprestado</h6>
@@ -124,7 +128,9 @@
                 </div>
             </div>
         </div>
-        
+        <div class="d-flex align-items-center my-4">
+            <div class="flex-grow-1 border-bottom"></div>
+        </div>
 
         <!-- PAGAMENTOS -->
         <form method="POST" action="<?= BASE_URL ?>/grupos/pagamentos/salvar">
@@ -132,7 +138,7 @@
             <input type="hidden" name="mes" value="<?= date('Y-m', strtotime($mesAtual)) ?>">
 
             <div class="card mt-4 p-3">
-                <h5>💳 Pagamentos</h5>
+                <h5>💳 Pagamentos <small class="text-muted" style="font-size: 0.8em;">(Cotas)</small></h5>
 
                 <div class="table-responsive">
                     <table class="table align-middle">
@@ -275,6 +281,10 @@
                     </div>
                 <?php else: ?>
                     <div>
+                        <a href="<?= BASE_URL ?>/emprestimos/create?grupo_id=<?= $grupo['id'] ?>" 
+                            class="btn btn-outline-primary mb-3">
+                            ➕
+                        </a>
                         <a href="<?= BASE_URL ?>/emprestimos?grupo_id=<?= $grupo['id'] ?>" 
                             class="btn btn-primary mb-3">
                             Ver totdos
@@ -388,11 +398,11 @@
                         <option value="admin">Admin</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <label for="" class="form-label fw-bold">Cotas</label>
                     <input type="number" name="cotas" class="form-control text-center" value="1">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label for="" class="form-label fw-bold">Convite</label>
                     <select name="enviar_convite" class="form-select">
                         <option value="0">Sem convite</option>
