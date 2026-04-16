@@ -1,20 +1,24 @@
-<h4>💸 Regras de Empréstimo</h4>
+<div class="d-flex justify-content-between align-items-center flex-wrap">
+    <div>
+        <h4>💸 Regras de Empréstimo</h4>
+    </div>
+    <div>
+        <a href="<?= BASE_URL ?>/grupos/<?= $grupo_id ?>" class="btn btn-outline-secondary">
+            ← Voltar
+        </a>
+    </div>
+</div>
+<hr>
 <form method="POST" action="<?= BASE_URL ?>/regras/salvar">
     <input type="hidden" name="grupo_id" value="<?= $grupo_id ?>">
     <div class="row text-center">
-        <div class="col-md-5 mb-3">
+        <div class="col-md-6 mb-3">
             <label class="form-label fw-bold">Valor mínimo</label>
             <input type="number" step="0.01" name="valor_minimo" value="<?= $regra['valor_minimo'] ?? '' ?>" required class="form-control">
         </div>
-        
-        <div class="col-md-5 mb-3">
+        <div class="col-md-6 mb-3">
             <label class="form-label fw-bold">Valor máximo</label>
             <input type="number" step="0.01" name="valor_maximo" value="<?= $regra['valor_maximo'] ?? '' ?>" required class="form-control">
-        </div>
-
-        <div class="col-md-2 mb-3">
-            <label class="form-label fw-bold">Dias de tolerância</label>
-            <input type="number" name="dias_tolerancia" value="<?= $regra['dias_tolerancia'] ?? 0 ?>" class="form-control">
         </div>
     </div>
     <div class="row g-3 text-center">
@@ -53,7 +57,13 @@
                 </div>
             </div>
         </div>
-
+    </div>
+    <div class="col-md-2 mb-3">
+        <label class="form-label">Dias de tolerância</label>
+        <input type="number" name="dias_tolerancia" value="<?= $regra['dias_tolerancia'] ?? 0 ?>" class="form-control">
+        <small class="text-muted d-block">
+            *Não cobrança de juros após o vencimento
+        </small>
     </div>
     
     <br><br>

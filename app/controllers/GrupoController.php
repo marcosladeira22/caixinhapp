@@ -96,6 +96,10 @@ class GrupoController extends Controller {
         $grupoModel = new Grupo($this->db);
         $grupoUsuario = new GrupoUsuario($this->db);
 
+        // 📌 Buscar regra do grupo
+        $regraModel = new RegraEmprestimo($this->db);
+        $regras = $regraModel->buscarPorGrupo($id);
+
         // 🔐 Verifica acesso
         if (!$grupoUsuario->usuarioPertence($id, $_SESSION['usuario_id'])) {
             $_SESSION['erro'] = "Sem acesso ao grupo";
@@ -217,7 +221,8 @@ class GrupoController extends Controller {
             'totalEmprestado'          => $totalEmprestado,
             'totalRecebidoEmprestimos' => $totalRecebidoEmprestimos,
             'saldoReal'                => $saldoReal,
-            'lucroJuros'               => $lucroJuros
+            'lucroJuros'               => $lucroJuros,
+            'regras'                   => $regras
         ]);
     }
 
@@ -425,7 +430,8 @@ class GrupoController extends Controller {
         $regraModel = new RegraEmprestimo($this->db);
         $regra = $regraModel->buscarPorGrupo($grupo_id);
 
-        $this->view('grupo/regras', [
+        // 🔥 VIEW CORRETA
+        $this->view('regras/index', [
             'grupo_id' => $grupo_id,
             'regra' => $regra
         ]);

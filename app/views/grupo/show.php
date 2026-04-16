@@ -35,9 +35,9 @@
             </a>
 
             <a href="<?= BASE_URL ?>/emprestimos?grupo_id=<?= $grupo['id'] ?>" 
-                class="btn btn-outline-warning">
-                💸 Empréstimos
-            </a>
+    class="btn btn-outline-warning">
+    💸 Empréstimos
+</a>
 
             <a href="<?= BASE_URL ?>/grupos/<?= $grupo['id'] ?>?aba=regras"
                class="btn <?= $aba === 'regras' ? 'btn-dark' : 'btn-outline-dark' ?>">
@@ -264,7 +264,7 @@
 
         <div class="card mt-4 p-3">
             <h5>💸 Empréstimos</h5>
-
+            
             <?php if (empty($emprestimos)): ?>
                 <p>Nenhum empréstimo</p>
             <?php else: ?>
@@ -282,7 +282,7 @@
 
                         <?php foreach($emprestimos as $e): ?>
                             <tr>
-                                <td><?= $e['usuario_nome'] ?></td>
+                                <td><?= $e['nome'] ?></td>
                                 <td>R$ <?= number_format($e['valor'], 2, ',', '.') ?></td>
                                 <td>R$ <?= number_format($e['valor_com_juros'], 2, ',', '.') ?></td>
                                 <td><?= $e['status'] ?></td>

@@ -77,7 +77,31 @@ class Emprestimo {
         $stmt->bindParam(":grupo_id", $grupo_id);
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $emprestimos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 🔥 ADICIONA DADOS CALCULADOS
+        require_once __DIR__ . '/RegraEmprestimo.php';
+        $regraModel = new RegraEmprestimo($this->conn);
+        $regra = $regraModel->buscarPorGrupo($grupo_id);
+
+        foreach ($emprestimos as &$e) {
+
+            $hoje = date('Y-m-d');
+
+            // dias totais de atraso
+            $diasAtrasoTotal = floor((strtotime($hoje) - strtotime($e['data_vencimento'])) / 86400);
+
+            $diasAtrasoTotal = max(0, $diasAtrasoTotal);
+
+            // dias cobrados (descontando tolerância)
+            $diasCobrados = max(0, $diasAtrasoTotal - ($regra['dias_tolerancia'] ?? 0));
+
+            $e['dias_atraso'] = $diasAtrasoTotal;
+            $e['dias_cobrados'] = $diasCobrados;
+            $e['dias_tolerancia'] = $regra['dias_tolerancia'] ?? 0;
+        }
+
+        return $emprestimos;
     }
 
     // =========================
