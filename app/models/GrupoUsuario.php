@@ -104,4 +104,27 @@ class GrupoUsuario {
 
         return $stmt->execute();
     }
+
+    // 🔐 BUSCAR NÍVEL DO USUÁRIO NO GRUPO
+    public function buscarNivel($usuario_id, $grupo_id) {
+
+        $query = "SELECT nivel 
+                FROM grupo_usuarios 
+                WHERE usuario_id = :usuario_id 
+                AND grupo_id = :grupo_id 
+                LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+
+        // 🔒 bind seguro
+        $stmt->bindParam(':usuario_id', $usuario_id);
+        $stmt->bindParam(':grupo_id', $grupo_id);
+
+        $stmt->execute();
+
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // 🎯 Retorna o nível ou null se não encontrar
+        return $resultado['nivel'] ?? null;
+    }
 }

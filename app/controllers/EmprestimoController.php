@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/Emprestimo.php';
 require_once __DIR__ . '/../models/Grupo.php';
+require_once __DIR__ . '/../models/GrupoUsuario.php';
 require_once __DIR__ . '/../models/RegraEmprestimo.php';
 require_once __DIR__ . '/../core/Controller.php';
 
@@ -16,235 +17,211 @@ class EmprestimoController extends Controller {
     }
 
     // =========================
+    // 🔐 MIDDLEWARE (ADMIN)
+    // =========================
+    private function onlyAdmin($grupo_id) {
+
+        $grupoUsuario = new GrupoUsuario($this->db);
+
+        $nivel = $grupoUsuario->buscarNivel($_SESSION['usuario_id'], $grupo_id);
+
+        // master SEMPRE pode
+        if ($_SESSION['nivel'] === 'master') {
+            return true;
+        }
+
+        if ($nivel !== 'admin') {
+            $_SESSION['erro'] = "Acesso restrito ao administrador";
+            header("Location: " . BASE_URL . "/emprestimos?grupo_id=" . $grupo_id);
+            exit;
+        }
+    }
+
+    // =========================
     // LISTAGEM
     // =========================
     public function index() {
 
-        $grupo_id = $_GET['grupo_id'];
+        $grupoUsuarioModel = new GrupoUsuario($this->db);
+        $grupo_id          = $_GET['grupo_id'];
+        $nivelGrupo        = $grupoUsuarioModel->buscarNivel(
+            $_SESSION['usuario_id'],$grupo_id
+            );
 
         $model = new Emprestimo($this->db);
 
-        // 🔥 Atualiza juros e atraso antes de listar
         $model->aplicarJurosAtrasoAutomatico($grupo_id);
 
         $emprestimos = $model->listarPorGrupo($grupo_id);
 
         $this->view('emprestimos/index', [
             'emprestimos' => $emprestimos,
-            'grupo_id' => $grupo_id
-        ]);
-    }
-
-    // =========================
-    // FORMULÁRIO
-    // =========================
-    public function create() {
-
-        $grupo_id = $_GET['grupo_id'] ?? null;
-
-        $grupoModel = new Grupo($this->db);
-        $membros = $grupoModel->buscarMembros($grupo_id);
-
-        $regraModel = new RegraEmprestimo($this->db);
-        $regra = $regraModel->buscarPorGrupo($grupo_id);
-
-        // =========================
-        // 🧠 CALCULAR SCORE
-        // =========================
-
-        $emprestimoModel = new Emprestimo($this->db);
-
-        $historico = $emprestimoModel->listarPorUsuarioGrupo(
-            $_SESSION['usuario_id'],
-            $_GET['grupo_id']
-        );
-
-        $total = count($historico);
-        $atrasados = 0;
-
-        foreach ($historico as $e) {
-            if ($e['status'] === 'atrasado') {
-                $atrasados++;
-            }
-        }
-
-        $percentual = $total > 0 ? ($atrasados / $total) * 100 : 0;
-        $score = 100 - $percentual;
-
-        $limiteMultiplicador = 1;
-
-        if ($score >= 80) {
-            $limiteMultiplicador = 1;
-        } elseif ($score >= 50) {
-            $limiteMultiplicador = 0.5;
-        } else {
-            $limiteMultiplicador = 0; // bloqueado
-        }
-
-        $regraModel = new RegraEmprestimo($this->db);
-        $regra = $regraModel->buscarPorGrupo($_GET['grupo_id']);
-        
-        $valorMaxPermitido = $regra['valor_maximo'] * $limiteMultiplicador;
-
-
-        $this->view('emprestimos/create', [
             'grupo_id' => $grupo_id,
-            'membros'  => $membros,
-            'regra'    => $regra,
-            'valorMaxPermitido' => $valorMaxPermitido,
-            'score' => $score
-        ]);
+            'nivel_grupo' => $nivelGrupo //
+]);
     }
 
     // =========================
-    // SALVAR
+    // SALVAR (FLUXO COMPLETO)
     // =========================
     public function store() {
 
-        // 🔒 Verifica dívida aberta
+        $grupo_id = $_POST['grupo_id'];
+        $usuario_id = $_POST['usuario_id'];
+        $valor = $_POST['valor'];
+
+        // =========================
+        // 🔒 VALIDAÇÃO DÍVIDA
+        // =========================
         $query = "SELECT COUNT(*) as total 
                   FROM emprestimos 
                   WHERE usuario_id = :usuario_id 
                   AND status IN ('aberto','atrasado')";
 
         $stmt = $this->db->prepare($query);
-        $stmt->bindParam(":usuario_id", $_POST['usuario_id']);
+        $stmt->bindParam(":usuario_id", $usuario_id);
         $stmt->execute();
 
-        $temDivida = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-
-        if ($temDivida > 0) {
+        if ($stmt->fetch(PDO::FETCH_ASSOC)['total'] > 0) {
             $_SESSION['erro'] = "Usuário já possui empréstimo em aberto";
-            header("Location: " . BASE_URL . "/emprestimos/create?grupo_id=" . $_POST['grupo_id']);
+            header("Location: " . BASE_URL . "/emprestimos/create?grupo_id=$grupo_id");
             exit;
         }
 
+        // =========================
+        // 📌 REGRA
+        // =========================
         $regraModel = new RegraEmprestimo($this->db);
-        $regra = $regraModel->buscarPorGrupo($_POST['grupo_id']);
+        $regra = $regraModel->buscarPorGrupo($grupo_id);
 
-        $valor = $_POST['valor'];
-
-        // 🔒 Validação regras
-        if ($regra) {
-
-            if ($valor < $regra['valor_minimo']) {
-                $_SESSION['erro'] = "Valor abaixo do mínimo permitido";
-                header("Location: " . BASE_URL . "/emprestimos/create?grupo_id=" . $_POST['grupo_id']);
-                exit;
-            }
-
-            if ($valor > $regra['valor_maximo']) {
-                $_SESSION['erro'] = "Valor acima do máximo permitido";
-                header("Location: " . BASE_URL . "/emprestimos/create?grupo_id=" . $_POST['grupo_id']);
-                exit;
-            }
+        if (!$regra) {
+            $_SESSION['erro'] = "Grupo sem regras definidas";
+            header("Location: " . BASE_URL . "/emprestimos?grupo_id=$grupo_id");
+            exit;
         }
 
-        // 💰 Juros inicial (USANDO MODEL)
-        $model = new Emprestimo($this->db);
-        $juros = $regra ? $model->calcularJurosInicial($valor, $regra) : 0;
+        // =========================
+        // 🧠 SCORE
+        // =========================
+        $emprestimoModel = new Emprestimo($this->db);
 
-        // 📌 Dados
-        $model->grupo_id = $_POST['grupo_id'];
-        $model->usuario_id = $_POST['usuario_id'];
-        $model->valor = $valor;
-        $model->data_emprestimo = $_POST['data_emprestimo'];
-        $model->data_vencimento = $_POST['data_vencimento'];
-        $model->juros_inicial = $juros;
-        $model->valor_com_juros = $valor + $juros;
+        $historico = $emprestimoModel->listarPorUsuarioGrupo($usuario_id, $grupo_id);
 
-        // 📅 Verifica se já nasceu atrasado
-        $hoje = date('Y-m-d');
+        $total = count($historico);
+        $atrasados = 0;
 
-        if ($model->data_vencimento < $hoje) {
-            $model->status = 'atrasado'; // já começa atrasado
-        } else {
-            $model->status = 'aberto';
+        foreach ($historico as $e) {
+            if ($e['status'] === 'atrasado') $atrasados++;
         }
 
-        $model->criar();
+        $score = $total > 0 ? 100 - (($atrasados / $total) * 100) : 100;
 
-        header("Location: " . BASE_URL . "/emprestimos?grupo_id=" . $model->grupo_id);
+        if ($score < 50) {
+            $_SESSION['erro'] = "Usuário com alto risco";
+            header("Location: " . BASE_URL . "/emprestimos/create?grupo_id=$grupo_id");
+            exit;
+        }
+
+        // =========================
+        // 📊 LIMITE
+        // =========================
+        $multiplicador = ($score >= 80) ? 1 : 0.5;
+        $valorMax = $regra['valor_maximo'] * $multiplicador;
+
+        if ($valor < $regra['valor_minimo'] || $valor > $valorMax) {
+            $_SESSION['erro'] = "Valor fora do limite";
+            header("Location: " . BASE_URL . "/emprestimos/create?grupo_id=$grupo_id");
+            exit;
+        }
+
+        // =========================
+        // 👤 PERFIL
+        // =========================
+        $grupoUsuario = new GrupoUsuario($this->db);
+        $nivel = $grupoUsuario->buscarNivel($_SESSION['usuario_id'], $grupo_id);
+
+        $isAdmin = ($nivel === 'admin');
+        $isMaster = ($_SESSION['nivel'] === 'master');
+
+        // =========================
+        // 💰 JUROS
+        // =========================
+        $juros = $emprestimoModel->calcularJurosInicial($valor, $regra);
+
+        // =========================
+        // 🔥 STATUS
+        // =========================
+        $status = ($isAdmin || $isMaster) ? 'aberto' : 'pendente';
+
+        // =========================
+        // 💾 SALVAR
+        // =========================
+        $emprestimoModel->grupo_id = $grupo_id;
+        $emprestimoModel->usuario_id = $usuario_id;
+        $emprestimoModel->valor = $valor;
+        $emprestimoModel->juros_inicial = $juros;
+        $emprestimoModel->valor_com_juros = $valor + $juros;
+        $emprestimoModel->data_emprestimo = date('Y-m-d');
+        $emprestimoModel->data_vencimento = date('Y-m-d', strtotime('+30 days'));
+        $emprestimoModel->status = $status;
+
+        $emprestimoModel->criar();
+
+        $_SESSION['sucesso'] = ($status === 'pendente')
+            ? "Solicitação enviada para aprovação"
+            : "Empréstimo criado com sucesso";
+
+        header("Location: " . BASE_URL . "/emprestimos?grupo_id=$grupo_id");
         exit;
     }
 
     // =========================
-    // EDITAR
+    // ✅ APROVAR
     // =========================
-    public function edit() {
+    public function aprovar() {
 
         $id = $_GET['id'];
         $grupo_id = $_GET['grupo_id'];
 
-        $model = new Emprestimo($this->db);
-        $emprestimo = $model->buscarPorId($id);
-
-        $this->view('emprestimos/edit', [
-            'emprestimo' => $emprestimo,
-            'grupo_id' => $grupo_id
-        ]);
-    }
-
-    // =========================
-    // ATUALIZAR
-    // =========================
-    public function update() {
-
-        $model = new Emprestimo($this->db);
-
-        $emprestimo = $model->buscarPorId($_POST['id']);
-
-        $regraModel = new RegraEmprestimo($this->db);
-        $regra = $regraModel->buscarPorGrupo($emprestimo['grupo_id']);
-
-        $valor = $_POST['valor'];
-
-        $juros = $regra ? $model->calcularJurosInicial($valor, $regra) : 0;
+        // 🔒 middleware
+        $this->onlyAdmin($grupo_id);
 
         $query = "UPDATE emprestimos 
-                  SET valor = :valor,
-                      valor_com_juros = :total,
-                      juros_inicial = :juros
+                  SET status = 'aberto' 
                   WHERE id = :id";
 
         $stmt = $this->db->prepare($query);
-        $stmt->bindParam(":valor", $valor);
-        $stmt->bindParam(":total", $valor + $juros);
-        $stmt->bindParam(":juros", $juros);
-        $stmt->bindParam(":id", $_POST['id']);
+        $stmt->bindParam(":id", $id);
         $stmt->execute();
 
-        header("Location: " . BASE_URL . "/emprestimos?grupo_id=" . $emprestimo['grupo_id']);
+        $_SESSION['sucesso'] = "Empréstimo aprovado";
+
+        header("Location: " . BASE_URL . "/emprestimos?grupo_id=$grupo_id");
         exit;
     }
 
     // =========================
-    // EXCLUIR
+    // ❌ RECUSAR
     // =========================
-    public function delete() {
+    public function recusar() {
 
         $id = $_GET['id'];
         $grupo_id = $_GET['grupo_id'];
 
-        $model = new Emprestimo($this->db);
-        $model->deletar($id);
+        // 🔒 middleware
+        $this->onlyAdmin($grupo_id);
 
-        header("Location: " . BASE_URL . "/emprestimos?grupo_id=" . $grupo_id);
-        exit;
-    }
+        $query = "UPDATE emprestimos 
+                  SET status = 'recusado' 
+                  WHERE id = :id";
 
-    // =========================
-    // PAGAR
-    // =========================
-    public function pagar() {
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(":id", $id);
+        $stmt->execute();
 
-        $id = $_GET['id'];
-        $grupo_id = $_GET['grupo_id'];
+        $_SESSION['sucesso'] = "Empréstimo recusado";
 
-        $model = new Emprestimo($this->db);
-        $model->marcarComoPago($id);
-
-        header("Location: " . BASE_URL . "/emprestimos?grupo_id=" . $grupo_id);
+        header("Location: " . BASE_URL . "/emprestimos?grupo_id=$grupo_id");
         exit;
     }
 }

@@ -450,27 +450,52 @@ class GrupoController extends Controller {
     // =========================
     public function solicitarEmprestimo() {
 
+        // =========================
+        // 📥 DADOS DO FORMULÁRIO
+        // =========================
         $grupo_id = $_POST['grupo_id'];
-        $valor = $_POST['valor'];
+        $valor = floatval($_POST['valor']); // garante número
 
-        // Busca regra
-        $regraModel = new RegraEmprestimo($this->db);
-        $regra = $regraModel->buscarPorGrupo($grupo_id);
-
-        if (!$regra) {
-            $_SESSION['erro'] = "Grupo sem regra de empréstimo";
+        // =========================
+        // 🔐 VALIDAÇÃO BASE
+        // =========================
+        if (!$grupo_id || $valor <= 0) {
+            $_SESSION['erro'] = "Dados inválidos.";
             header("Location: " . $_SERVER['HTTP_REFERER']);
             exit;
         }
 
+        // =========================
+        // 📌 MODELS
+        // =========================
+        $regraModel = new RegraEmprestimo($this->db);
         $emprestimoModel = new Emprestimo($this->db);
+        $grupoUsuarioModel = new GrupoUsuario($this->db);
 
+        // =========================
+        // 📊 BUSCA REGRA DO GRUPO
+        // =========================
+        $regra = $regraModel->buscarPorGrupo($grupo_id);
+
+        if (!$regra) {
+            $_SESSION['erro'] = "Grupo sem regra de empréstimo.";
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            exit;
+        }
+
+        // =========================
+        // 👤 IDENTIFICA USUÁRIO
+        // =========================
+        $usuario_id = $_SESSION['usuario_id'];
+        $usuarioNivelSistema = $_SESSION['nivel'] ?? 'membro'; // master ou padrão
+
+        // nível dentro do grupo (admin ou membro)
+        $nivelNoGrupo = $grupoUsuarioModel->buscarNivel($usuario_id, $grupo_id);
+
+        // =========================
         // 🧠 SCORE DO USUÁRIO
-        // pega histórico do usuário no grupo
-        $historico = $emprestimoModel->listarPorUsuarioGrupo(
-            $_SESSION['usuario_id'],
-            $grupo_id
-        );
+        // =========================
+        $historico = $emprestimoModel->listarPorUsuarioGrupo($usuario_id, $grupo_id);
 
         $total = count($historico);
         $atrasados = 0;
@@ -481,62 +506,92 @@ class GrupoController extends Controller {
             }
         }
 
-        // calcula score
         $percentual = $total > 0 ? ($atrasados / $total) * 100 : 0;
         $score = 100 - $percentual;
-        
-        // 🚫 BLOQUEIO / LIMITE
-        $limiteMultiplicador = 1;
 
-        if ($score >= 80) {
-            $limiteMultiplicador = 1; // 100%
-        } elseif ($score >= 50) {
-            $limiteMultiplicador = 0.5; // 50%
-        } else {
+        // =========================
+        // 🚫 REGRAS DE RISCO
+        // =========================
+        if ($score < 50) {
             $_SESSION['erro'] = "Usuário com alto risco. Empréstimo bloqueado.";
             header("Location: " . $_SERVER['HTTP_REFERER']);
             exit;
         }
 
-        // Validação de limites
+        // =========================
+        // 📏 LIMITE DINÂMICO
+        // =========================
+        $limiteMultiplicador = ($score >= 80) ? 1 : 0.5;
+
         $valorMaxPermitido = $regra['valor_maximo'] * $limiteMultiplicador;
 
         if ($valor < $regra['valor_minimo'] || $valor > $valorMaxPermitido) {
-
-            $_SESSION['erro'] = "Valor fora do limite permitido para seu perfil.";
-
+            $_SESSION['erro'] = "Valor fora do limite permitido.";
             header("Location: " . $_SERVER['HTTP_REFERER']);
             exit;
         }
 
-        // Calcula juros
+        // =========================
+        // 💰 CÁLCULO DE JUROS
+        // =========================
         $juros = $emprestimoModel->calcularJurosInicial($valor, $regra);
-
         $valorTotal = $valor + $juros;
 
-        // Define datas
+        // =========================
+        // 📅 DATAS
+        // =========================
         $dataEmprestimo = date('Y-m-d');
         $dataVencimento = date('Y-m-d', strtotime('+30 days'));
 
-        // INSERT
+        // =========================
+        // 🧠 REGRA DE STATUS (CORE)
+        // =========================
+        $status = 'pendente'; // padrão
+
+        // 🔥 MASTER ignora tudo
+        if ($usuarioNivelSistema === 'master') {
+            $status = 'aberto';
+        }
+
+        // 🔥 ADMIN do grupo pode aprovar direto
+        elseif ($nivelNoGrupo === 'admin') {
+            $status = 'aberto';
+        }
+
+        // 🔥 MEMBRO precisa aprovação
+        else {
+            $status = 'pendente';
+        }
+
+        // =========================
+        // 💾 INSERT
+        // =========================
         $query = "INSERT INTO emprestimos 
             (grupo_id, usuario_id, valor, valor_com_juros, juros_inicial, data_emprestimo, data_vencimento, status)
             VALUES
-            (:grupo_id, :usuario_id, :valor, :valor_total, :juros, :data_emp, :data_venc, 'aberto')";
+            (:grupo_id, :usuario_id, :valor, :valor_total, :juros, :data_emp, :data_venc, :status)";
 
         $stmt = $this->db->prepare($query);
 
         $stmt->bindParam(":grupo_id", $grupo_id);
-        $stmt->bindParam(":usuario_id", $_SESSION['usuario_id']);
+        $stmt->bindParam(":usuario_id", $usuario_id);
         $stmt->bindParam(":valor", $valor);
         $stmt->bindParam(":valor_total", $valorTotal);
         $stmt->bindParam(":juros", $juros);
         $stmt->bindParam(":data_emp", $dataEmprestimo);
         $stmt->bindParam(":data_venc", $dataVencimento);
+        $stmt->bindParam(":status", $status);
 
         $stmt->execute();
 
-        $_SESSION['sucesso'] = "Empréstimo solicitado com juros aplicado";
+        // =========================
+        // 📣 FEEDBACK UX
+        // =========================
+        if ($status === 'pendente') {
+            $_SESSION['sucesso'] = "Solicitação enviada para aprovação.";
+        } else {
+            $_SESSION['sucesso'] = "Empréstimo criado com sucesso.";
+        }
 
         header("Location: " . $_SERVER['HTTP_REFERER']);
         exit;

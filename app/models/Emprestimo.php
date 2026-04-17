@@ -44,10 +44,14 @@ class Emprestimo {
 
         $stmt = $this->conn->prepare($query);
 
+        // 🔥 AQUI É IMPORTANTE
+        // Se não vier status definido, assume 'aberto'
+        // (admin cria direto aprovado)
         if (empty($this->status)) {
             $this->status = 'aberto';
         }
 
+        // bindings
         $stmt->bindParam(":grupo_id", $this->grupo_id);
         $stmt->bindParam(":usuario_id", $this->usuario_id);
         $stmt->bindParam(":valor", $this->valor);
