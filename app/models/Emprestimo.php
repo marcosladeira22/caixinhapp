@@ -289,9 +289,9 @@ class Emprestimo {
         return $stmt->execute();
     }
 
-    // ===================
+    // ===============================
     // TOTAL LUCRO JUROS - EMPRESTIMOS
-    // ===================
+    // ===============================
     public function totalLucroJuros($grupo_id) {
 
         $query = "SELECT SUM((valor_com_juros - valor)) as lucro";
@@ -301,6 +301,23 @@ class Emprestimo {
         $stmt->execute();
 
         return $stmt->fetch(PDO::FETCH_ASSOC)['lucro'] ?? 0;
+    }
+
+    // ===============================
+    // LISTAR USUÁRIO NO GRUPO
+    // ===============================
+    public function listarPorUsuarioGrupo($usuario_id, $grupo_id) {
+
+        $query = "SELECT * FROM emprestimos 
+                WHERE usuario_id = :usuario_id 
+                AND grupo_id = :grupo_id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':usuario_id', $usuario_id);
+        $stmt->bindParam(':grupo_id', $grupo_id);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
 }

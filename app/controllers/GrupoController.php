@@ -463,14 +463,51 @@ class GrupoController extends Controller {
             exit;
         }
 
-        // Validação de limites
-        if ($valor < $regra['valor_minimo'] || $valor > $regra['valor_maximo']) {
-            $_SESSION['erro'] = "Valor fora do permitido";
+        $emprestimoModel = new Emprestimo($this->db);
+
+        // 🧠 SCORE DO USUÁRIO
+        // pega histórico do usuário no grupo
+        $historico = $emprestimoModel->listarPorUsuarioGrupo(
+            $_SESSION['usuario_id'],
+            $grupo_id
+        );
+
+        $total = count($historico);
+        $atrasados = 0;
+
+        foreach ($historico as $e) {
+            if ($e['status'] === 'atrasado') {
+                $atrasados++;
+            }
+        }
+
+        // calcula score
+        $percentual = $total > 0 ? ($atrasados / $total) * 100 : 0;
+        $score = 100 - $percentual;
+        
+        // 🚫 BLOQUEIO / LIMITE
+        $limiteMultiplicador = 1;
+
+        if ($score >= 80) {
+            $limiteMultiplicador = 1; // 100%
+        } elseif ($score >= 50) {
+            $limiteMultiplicador = 0.5; // 50%
+        } else {
+            $_SESSION['erro'] = "Usuário com alto risco. Empréstimo bloqueado.";
             header("Location: " . $_SERVER['HTTP_REFERER']);
             exit;
         }
 
-        $emprestimoModel = new Emprestimo($this->db);
+        // Validação de limites
+        $valorMaxPermitido = $regra['valor_maximo'] * $limiteMultiplicador;
+
+        if ($valor < $regra['valor_minimo'] || $valor > $valorMaxPermitido) {
+
+            $_SESSION['erro'] = "Valor fora do limite permitido para seu perfil.";
+
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            exit;
+        }
 
         // Calcula juros
         $juros = $emprestimoModel->calcularJurosInicial($valor, $regra);

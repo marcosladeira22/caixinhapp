@@ -48,10 +48,51 @@ class EmprestimoController extends Controller {
         $regraModel = new RegraEmprestimo($this->db);
         $regra = $regraModel->buscarPorGrupo($grupo_id);
 
+        // =========================
+        // 🧠 CALCULAR SCORE
+        // =========================
+
+        $emprestimoModel = new Emprestimo($this->db);
+
+        $historico = $emprestimoModel->listarPorUsuarioGrupo(
+            $_SESSION['usuario_id'],
+            $_GET['grupo_id']
+        );
+
+        $total = count($historico);
+        $atrasados = 0;
+
+        foreach ($historico as $e) {
+            if ($e['status'] === 'atrasado') {
+                $atrasados++;
+            }
+        }
+
+        $percentual = $total > 0 ? ($atrasados / $total) * 100 : 0;
+        $score = 100 - $percentual;
+
+        $limiteMultiplicador = 1;
+
+        if ($score >= 80) {
+            $limiteMultiplicador = 1;
+        } elseif ($score >= 50) {
+            $limiteMultiplicador = 0.5;
+        } else {
+            $limiteMultiplicador = 0; // bloqueado
+        }
+
+        $regraModel = new RegraEmprestimo($this->db);
+        $regra = $regraModel->buscarPorGrupo($_GET['grupo_id']);
+        
+        $valorMaxPermitido = $regra['valor_maximo'] * $limiteMultiplicador;
+
+
         $this->view('emprestimos/create', [
             'grupo_id' => $grupo_id,
             'membros'  => $membros,
-            'regra'    => $regra
+            'regra'    => $regra,
+            'valorMaxPermitido' => $valorMaxPermitido,
+            'score' => $score
         ]);
     }
 

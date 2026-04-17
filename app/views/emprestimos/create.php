@@ -1,6 +1,22 @@
 <div class="container mt-4">
     <h4>💸 Novo Empréstimo</h4>
     <hr>
+    <?php if ($valorMaxPermitido <= 0): ?>
+        <div class="alert alert-danger">
+            ❌ Você não pode solicitar empréstimos no momento (alto risco)
+        </div>
+    <?php else: ?>
+        <div class="alert alert-info">
+            <div>
+                Seu limite atual: 
+                <strong>R$ <?= number_format($valorMaxPermitido, 2, ',', '.') ?></strong>
+            </div>
+            <div>
+                Seu score: <strong><?= number_format($score ?? 0, 0) ?></strong>
+            </div>
+        </div>
+    <?php endif; ?>
+   
     <form method="POST" action="<?= BASE_URL ?>/emprestimos/store">
         <input type="hidden" name="grupo_id" value="<?= $grupo_id ?>">
         <!-- USUÁRIO -->
