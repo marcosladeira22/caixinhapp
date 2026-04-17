@@ -39,6 +39,11 @@
                 💸 Empréstimos
             </a>
 
+            <a href="<?= BASE_URL ?>/grupos/<?= $grupo['id'] ?>?aba=score"
+               class="btn <?= $aba === 'score' ? 'btn-info' : 'btn-outline-info' ?>">
+                📈 Score
+            </a>
+
             <a href="<?= BASE_URL ?>/grupos/<?= $grupo['id'] ?>?aba=regras"
                class="btn <?= $aba === 'regras' ? 'btn-dark' : 'btn-outline-dark' ?>">
                 ⚙️ Regras
@@ -351,6 +356,51 @@
                                             class="btn btn-sm btn-danger"
                                             onclick="return confirm('Excluir empréstimo?')">🗑
                                     </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- ============================ -->
+    <!-- 💸 ABA SCORE CONFIABILIDADE -->
+    <!-- =========================== -->
+    <?php if ($aba === 'score'): ?>
+        <div class="card mt-4 p-3">
+            <h5>📊 Score de Confiabilidade</h5>
+            <?php if (empty($scoreUsuarios)): ?>
+                <p>Nenhum dado disponível</p>
+            <?php else: ?>
+                <table class="table table-bordered text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Empréstimos</th>
+                            <th>Atrasos</th>
+                            <th>% Inadimplência</th>
+                            <th>Score</th>
+                            <th>Nível</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($scoreUsuarios as $u): ?>
+                            <tr>
+                                <td><?= $u['nome'] ?></td>
+                                <td><?= $u['total'] ?></td>
+                                <td><?= $u['atrasados'] ?></td>
+                                <td><?= number_format($u['percentual'], 1, ',', '.') ?>%</td>
+                                <td><?= number_format($u['score'], 0) ?></td>
+                                <td>
+                                    <?php if ($u['nivel'] === 'bom'): ?>
+                                        <span class="badge bg-success">🟢 Bom</span>
+                                    <?php elseif ($u['nivel'] === 'atencao'): ?>
+                                        <span class="badge bg-warning text-dark">🟡 Atenção</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-danger">🔴 Risco</span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

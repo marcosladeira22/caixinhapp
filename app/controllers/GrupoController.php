@@ -172,6 +172,9 @@ class GrupoController extends Controller {
             }
         }
 
+        // SCORE DE CONFIABILIDADE
+        $scoreUsuarios = [];
+
         // 📊 indicadores
         $totalPendente = $totalEsperado - $totalArrecadado;
 
@@ -200,6 +203,22 @@ class GrupoController extends Controller {
 
         foreach ($emprestimos as $e) {
 
+            $userId = $e['usuario_id'];
+
+            if (!isset($scoreUsuarios[$userId])) {
+                $scoreUsuarios[$userId] = [
+                    'nome' => $e['nome'],
+                    'total' => 0,
+                    'atrasados' => 0
+                ];
+            }
+
+            $scoreUsuarios[$userId]['total']++;
+
+            if ($e['status'] === 'atrasado') {
+                $scoreUsuarios[$userId]['atrasados']++;
+            }
+
             $totalEmprestimos++;
 
             // 💸 soma valor emprestado (base)
@@ -225,6 +244,28 @@ class GrupoController extends Controller {
                 // 🔥 valor REAL que ainda está na rua
                 $saldoEmprestimosAberto += $e['valor_com_juros'];
             }
+        }
+
+        foreach ($scoreUsuarios as $userId => $dados) {
+
+            $percentual = $dados['total'] > 0
+                ? ($dados['atrasados'] / $dados['total']) * 100
+                : 0;
+
+            $score = 100 - $percentual;
+
+            // 🎯 Classificação
+            if ($score >= 80) {
+                $nivel = 'bom';
+            } elseif ($score >= 50) {
+                $nivel = 'atencao';
+            } else {
+                $nivel = 'risco';
+            }
+
+            $scoreUsuarios[$userId]['percentual'] = $percentual;
+            $scoreUsuarios[$userId]['score'] = $score;
+            $scoreUsuarios[$userId]['nivel'] = $nivel;
         }
 
         $percentualInadimplencia = $totalEmprestimos > 0
@@ -265,7 +306,8 @@ class GrupoController extends Controller {
             'emprestimos'              => $ultimosEmprestimos, // 👈 só os 5 últimos na tela
             'totalAtrasados'           => $totalAtrasados,
             'valorAtrasado'            => $valorAtrasado,
-            'percentualInadimplencia'  => $percentualInadimplencia
+            'percentualInadimplencia'  => $percentualInadimplencia,
+            'scoreUsuarios'            => $scoreUsuarios
         ]);
     }
 
