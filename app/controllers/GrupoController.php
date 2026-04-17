@@ -193,9 +193,14 @@ class GrupoController extends Controller {
         $totalRecebidoEmprestimos = 0;     // dinheiro que voltou
         $saldoEmprestimosAberto = 0;       // dívida atual (em aberto)
         $lucroJuros = 0;                   // lucro total
+        $totalEmprestimos = 0;
+        $totalAtrasados = 0;
+        $valorAtrasado = 0;
 
 
         foreach ($emprestimos as $e) {
+
+            $totalEmprestimos++;
 
             // 💸 soma valor emprestado (base)
             $totalEmprestado += $e['valor'];
@@ -208,12 +213,23 @@ class GrupoController extends Controller {
                 // 💰 já entrou no caixa
                 $totalRecebidoEmprestimos += $e['valor_com_juros'];
 
+            }
+
+            elseif ($e['status'] === 'atrasado') {
+
+                $totalAtrasados++;
+                $valorAtrasado += $e['valor_com_juros'];
+
             } else {
 
                 // 🔥 valor REAL que ainda está na rua
                 $saldoEmprestimosAberto += $e['valor_com_juros'];
             }
         }
+
+        $percentualInadimplencia = $totalEmprestimos > 0
+            ? ($totalAtrasados / $totalEmprestimos) * 100
+            : 0;
 
 
         // 🧠 SALDO REAL (REGRA CORRETA)
@@ -246,7 +262,10 @@ class GrupoController extends Controller {
             'saldoReal'                => $saldoReal,
             'lucroJuros'               => $lucroJuros,
             'regras'                   => $regras,
-            'emprestimos'              => $ultimosEmprestimos // 👈 só os 5 últimos na tela
+            'emprestimos'              => $ultimosEmprestimos, // 👈 só os 5 últimos na tela
+            'totalAtrasados'           => $totalAtrasados,
+            'valorAtrasado'            => $valorAtrasado,
+            'percentualInadimplencia'  => $percentualInadimplencia
         ]);
     }
 

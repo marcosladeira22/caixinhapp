@@ -131,6 +131,23 @@
         <div class="d-flex align-items-center my-4">
             <div class="flex-grow-1 border-bottom"></div>
         </div>
+        <div class="mt-3">
+            <?php if ($totalAtrasados > 0): ?>
+                <div class="alert alert-danger">
+                    <strong>⚠️ Inadimplência detectada</strong><br>
+                    📄 Empréstimos atrasados: 
+                    <strong><?= $totalAtrasados ?></strong><br>
+                    💸 Valor em risco: 
+                    <strong>R$ <?= number_format($valorAtrasado, 2, ',', '.') ?></strong><br>
+                    📊 Percentual:
+                    <strong><?= number_format($percentualInadimplencia, 1, ',', '.') ?>%</strong>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-success">
+                    ✅ Nenhum empréstimo em atraso
+                </div>
+            <?php endif; ?>
+        </div>
 
         <!-- PAGAMENTOS -->
         <form method="POST" action="<?= BASE_URL ?>/grupos/pagamentos/salvar">
