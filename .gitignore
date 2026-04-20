@@ -1,0 +1,14 @@
+# Arquivos sensíveis
+.env
+.env.local
+config/banco.php
+
+# Logs
+*.log
+
+# Dependências
+/vendor
+
+# Sistema
+.DS_Store
+Thumbs.db
