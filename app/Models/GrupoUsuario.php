@@ -45,4 +45,25 @@ class GrupoUsuario
 
         return $resultado['nivel'] ?? null;
     }
+
+    /**
+     * Retorna dados do usuário dentro do grupo
+     */
+    public static function buscar($usuario_id, $grupo_id)
+    {
+        $db = Database::conectar();
+
+        $sql = "SELECT * FROM grupos_usuarios
+                WHERE usuario_id = :usuario_id
+                AND grupo_id = :grupo_id
+                AND ativo = 1";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':usuario_id' => $usuario_id,
+            ':grupo_id' => $grupo_id
+        ]);
+
+        return $stmt->fetch();
+    }
 }
