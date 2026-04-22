@@ -47,7 +47,7 @@ class GrupoController extends Controller
                 1
             );
 
-            header('Location: /?rota=grupo@index');
+            header('Location: ' . base_url("?rota=dashboard@grupo&grupo_id={$grupo_id}"));
             exit;
         }
 

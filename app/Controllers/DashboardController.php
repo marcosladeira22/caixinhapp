@@ -2,35 +2,70 @@
 namespace Controllers;
 
 use Core\Controller;
-use Core\Sessao;
 use Core\Autenticacao;
+use Core\Sessao;
+use Models\Grupo;
 use Models\GrupoUsuario;
 
 class DashboardController extends Controller
 {
+    /**
+     * Resolve o fluxo inicial após o login
+     * Decide se:
+     * - cria grupo
+     * - entra direto
+     * - escolhe grupo
+     */
     public function index()
     {
-        // 🔒 Garante que o usuário esteja logado
         Autenticacao::verificar();
 
-        // Pega o grupo atual pela URL (?grupo_id=1)
+        $usuario_id = Sessao::get('usuario_id');
+
+        // Busca os grupos do usuário
+        $grupos = Grupo::listarPorUsuario($usuario_id);
+
+        // 🟢 Usuário sem grupo
+        if (empty($grupos)) {
+            header('Location: ' . base_url('?rota=grupo@criar'));
+            exit;
+        }
+
+        // 🟢 Usuário com apenas um grupo
+        if (count($grupos) === 1) {
+            $grupo_id = $grupos[0]['id'];
+            header('Location: ' . base_url("?rota=dashboard@grupo&grupo_id={$grupo_id}"));
+            exit;
+        }
+
+        // 🟢 Usuário com vários grupos
+        $this->view('dashboard/selecionar_grupo', compact('grupos'));
+    }
+
+    /**
+     * Dashboard de um grupo específico
+     * Decide se é ADMIN ou MEMBRO
+     */
+    public function grupo()
+    {
+        Autenticacao::verificar();
+
         $grupo_id = $_GET['grupo_id'] ?? null;
 
         if (!$grupo_id) {
             die('Grupo não informado.');
         }
 
-        // ID do usuário logado
         $usuario_id = Sessao::get('usuario_id');
 
-        // Verifica o nível do usuário nesse grupo
+        // Verifica nível do usuário no grupo
         $nivel = GrupoUsuario::nivelUsuarioNoGrupo($usuario_id, $grupo_id);
 
         if (!$nivel) {
             die('Usuário não pertence a este grupo.');
         }
 
-        // Decide qual dashboard carregar
+        // ✅ Aqui reaproveitamos os métodos privados
         if ($nivel === 'ADMIN') {
             $this->dashboardAdmin($grupo_id);
         } else {
@@ -38,15 +73,18 @@ class DashboardController extends Controller
         }
     }
 
-    // 📊 Dashboard do Administrador
+    /**
+     * 📊 Dashboard do ADMINISTRADOR
+     * Responsável apenas por montar a visão do admin
+     */
     private function dashboardAdmin($grupo_id)
     {
         /**
-         * Aqui futuramente entrarão:
-         * - Total em caixa
-         * - Usuários do grupo
-         * - Empréstimos
-         * - Inadimplência
+         * Futuro:
+         * - total em caixa
+         * - inadimplentes
+         * - empréstimos
+         * - membros
          */
 
         $this->view('dashboard/admin', [
@@ -54,14 +92,17 @@ class DashboardController extends Controller
         ]);
     }
 
-    // 👤 Dashboard do Membro
+    /**
+     * 👤 Dashboard do MEMBRO
+     * Mostra somente dados pessoais
+     */
     private function dashboardMembro($grupo_id)
     {
         /**
-         * Aqui futuramente entrarão:
-         * - Pagamentos do usuário
-         * - Score
-         * - Empréstimos pessoais
+         * Futuro:
+         * - pagamentos do usuário
+         * - score
+         * - empréstimos pessoais
          */
 
         $this->view('dashboard/membro', [

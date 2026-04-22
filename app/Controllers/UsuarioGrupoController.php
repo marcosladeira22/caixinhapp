@@ -73,7 +73,7 @@ class UsuarioGrupoController extends Controller
             );
 
             // Redireciona para o dashboard
-            header("Location: /?rota=dashboard@index&grupo_id={$grupo_id}");
+            header("Location: " . base_url("?rota=dashboard@index&grupo_id={$grupo_id}"));
             exit;
         }
 

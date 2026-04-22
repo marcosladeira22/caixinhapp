@@ -22,6 +22,10 @@
                     <button class="btn btn-primary w-100">Entrar</button>
                 </form>
 
+                <div class="text-center mt-3">
+                    <a href="<?php base_url('?rota=auth@cadastro') ?>">Quero criar minha caixinha</a>
+                </div>
+
             </div>
         </div>
     </div>

@@ -8,6 +8,10 @@ class GrupoUsuario
     // Associa um usuário a um grupo
     public static function adicionarUsuarioAoGrupo($usuario_id, $grupo_id, $nivel, $quantidade_cotas)
     {
+        if (!$usuario_id) {
+            throw new \Exception('Usuário inválido para associação ao grupo.');
+        }
+
         $db = Database::conectar();
 
         $sql = "INSERT INTO grupos_usuarios 
@@ -17,9 +21,9 @@ class GrupoUsuario
 
         $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':usuario_id' => $usuario_id,
-            ':grupo_id' => $grupo_id,
-            ':nivel' => $nivel,
+            ':usuario_id'       => $usuario_id,
+            ':grupo_id'         => $grupo_id,
+            ':nivel'            => $nivel,
             ':quantidade_cotas' => $quantidade_cotas
         ]);
     }

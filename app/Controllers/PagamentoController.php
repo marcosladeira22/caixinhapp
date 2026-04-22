@@ -61,7 +61,7 @@ class PagamentoController extends Controller
                 ':dias_atraso'    => $dias_atraso
             ]);
 
-            header("Location: /?rota=dashboard@index&grupo_id={$grupo_id}");
+            header("Location: " . base_url("?rota=dashboard@index&grupo_id={$grupo_id}"));
             exit;
         }
 

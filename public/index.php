@@ -1,4 +1,6 @@
 <?php
+require __DIR__ . '/../app/Core/Helpers.php';
+
 // Exibir erros apenas em desenvolvimento
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
