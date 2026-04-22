@@ -8,6 +8,8 @@ use Core\Permissao;
 use Models\Pagamento;
 use Models\GrupoUsuario;
 use Models\Grupo;
+use Services\ScoreService;
+
 
 class PagamentoController extends Controller
 {
@@ -61,6 +63,14 @@ class PagamentoController extends Controller
                 ':dias_atraso'    => $dias_atraso
             ]);
 
+            // ✅ Atualiza score automaticamente
+            ScoreService::atualizarScore(
+                $usuario_id_pagamento,
+                $grupo_id,
+                $dias_atraso
+            );
+
+
             header("Location: " . base_url("?rota=dashboard@index&grupo_id={$grupo_id}"));
             exit;
         }
@@ -71,4 +81,6 @@ class PagamentoController extends Controller
             'quantidade_cotas' => $grupoUsuario['quantidade_cotas']
         ]);
     }
+
+    
 }

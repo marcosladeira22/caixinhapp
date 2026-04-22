@@ -105,8 +105,16 @@ class DashboardController extends Controller
          * - empréstimos pessoais
          */
 
+        $dadosGrupoUsuario = GrupoUsuario::buscar(
+            Sessao::get('usuario_id'),
+            $grupo_id
+        );
+
+        $score = $dadosGrupoUsuario['score'];
+
         $this->view('dashboard/membro', [
-            'grupo_id' => $grupo_id
+            'grupo_id' => $grupo_id,
+            'score' => $score
         ]);
     }
 }
