@@ -40,10 +40,25 @@ class EmprestimoService
             throw new Exception('Grupo não encontrado.');
         }
 
+        // ✅ Limite dinâmico baseado no score
+        $limitePermitido = self::limitePorScore($grupo, $dadosGrupoUsuario['score']);
 
-        if ($valor < $grupo['emprestimo_min'] || $valor > $grupo['emprestimo_max']) {
-            throw new Exception('Valor fora dos limites permitidos.');
+        // ✅ Valor mínimo continua existindo
+        if ($valor < $grupo['emprestimo_min']) {
+            throw new Exception(
+                "O valor mínimo para empréstimo neste grupo é R$ " .
+                number_format($grupo['emprestimo_min'], 2, ',', '.')
+            );
         }
+
+        // ✅ Novo limite baseado no score
+        if ($valor > $limitePermitido) {
+            throw new Exception(
+                "Com seu score atual, o limite máximo permitido é R$ " .
+                number_format($limitePermitido, 2, ',', '.')
+            );
+        }
+
     }
 
     /**
@@ -56,6 +71,19 @@ class EmprestimoService
         }
 
         return ($valor * $grupo['taxa_valor']) / 100;
+    }
+
+    private static function limitePorScore(array $grupo, int $score): float
+    {
+        if ($score < 50) {
+            throw new Exception('Score insuficiente para empréstimo.');
+        }
+
+        if ($score < 80) {
+            return $grupo['emprestimo_max'] * 0.3;
+        }
+
+        return $grupo['emprestimo_max'];
     }
 
     /**
@@ -86,4 +114,5 @@ class EmprestimoService
             ':valor_total'      => ($valor + $taxa)
         ]);
     }
+
 }
