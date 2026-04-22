@@ -38,4 +38,24 @@ class Grupo
 
         return $stmt->fetchAll();
     }
+
+    /**
+     * Busca um grupo pelo ID
+     */
+    public static function buscarPorId(int $grupo_id): ?array
+    {
+        $db = Database::conectar();
+
+        $sql  = "SELECT * FROM grupos WHERE id = :id LIMIT 1";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':id' => $grupo_id
+        ]);
+
+        $grupo = $stmt->fetch();
+
+        // Retorna null se não encontrar
+        return $grupo ?: null;
+    }
+
 }
