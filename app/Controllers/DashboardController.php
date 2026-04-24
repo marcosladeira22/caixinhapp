@@ -10,11 +10,11 @@ use Models\GrupoUsuario;
 class DashboardController extends Controller
 {
     /**
-     * Resolve o fluxo inicial após o login
-     * Decide se:
-     * - cria grupo
-     * - entra direto
-     * - escolhe grupo
+     * Fluxo inicial após o login
+     * Decide:
+     * - se cria grupo
+     * - se entra direto
+     * - se escolhe grupo
      */
     public function index()
     {
@@ -25,96 +25,77 @@ class DashboardController extends Controller
         // Busca os grupos do usuário
         $grupos = Grupo::listarPorUsuario($usuario_id);
 
-        // 🟢 Usuário sem grupo
+        // Usuário não possui grupo → cria o primeiro
         if (empty($grupos)) {
             header('Location: ' . base_url('?rota=grupo@criar'));
             exit;
         }
 
-        // 🟢 Usuário com apenas um grupo
+        // Usuário possui apenas um grupo → entra direto
         if (count($grupos) === 1) {
             $grupo_id = $grupos[0]['id'];
             header('Location: ' . base_url("?rota=dashboard@grupo&grupo_id={$grupo_id}"));
             exit;
         }
 
-        // 🟢 Usuário com vários grupos
+        // Usuário possui vários grupos → escolhe qual acessar
         $this->view('dashboard/selecionar_grupo', compact('grupos'));
     }
 
     /**
      * Dashboard de um grupo específico
-     * Decide se é ADMIN ou MEMBRO
+     * AQUI está a principal mudança
      */
     public function grupo()
     {
         Autenticacao::verificar();
 
         $grupo_id = $_GET['grupo_id'] ?? null;
-
         if (!$grupo_id) {
             die('Grupo não informado.');
         }
 
         $usuario_id = Sessao::get('usuario_id');
 
-        // Verifica nível do usuário no grupo
+        // Verifica nível do usuário dentro do grupo
         $nivel = GrupoUsuario::nivelUsuarioNoGrupo($usuario_id, $grupo_id);
 
         if (!$nivel) {
             die('Usuário não pertence a este grupo.');
         }
 
-        // ✅ Aqui reaproveitamos os métodos privados
+        /**
+         * 🔥 NOVO CONCEITO
+         * Preparamos UM array de dados
+         * O que muda é o CONTEÚDO, não a view
+         */
+
         if ($nivel === 'ADMIN') {
-            $this->dashboardAdmin($grupo_id);
+
+            // Admin vê dados do GRUPO
+            $dados = [
+                'tipo'     => 'ADMIN',
+                'grupo_id' => $grupo_id
+                // futuramente:
+                // total_caixa, inadimplentes, etc
+            ];
+
         } else {
-            $this->dashboardMembro($grupo_id);
+
+            // Membro vê apenas informações DELE
+            $grupoUsuario = GrupoUsuario::buscar($usuario_id, $grupo_id);
+
+            $dados = [
+                'tipo'             => 'MEMBRO',
+                'grupo_id'         => $grupo_id,
+                'score'            => $grupoUsuario['score'],
+                'quantidade_cotas' => $grupoUsuario['quantidade_cotas']
+            ];
         }
-    }
 
-    /**
-     * 📊 Dashboard do ADMINISTRADOR
-     * Responsável apenas por montar a visão do admin
-     */
-    private function dashboardAdmin($grupo_id)
-    {
-        /**
-         * Futuro:
-         * - total em caixa
-         * - inadimplentes
-         * - empréstimos
-         * - membros
-         */
-
-        $this->view('dashboard/admin', [
-            'grupo_id' => $grupo_id
-        ]);
-    }
-
-    /**
-     * 👤 Dashboard do MEMBRO
-     * Mostra somente dados pessoais
-     */
-    private function dashboardMembro($grupo_id)
-    {
-        /**
-         * Futuro:
-         * - pagamentos do usuário
-         * - score
-         * - empréstimos pessoais
-         */
-
-        $dadosGrupoUsuario = GrupoUsuario::buscar(
-            Sessao::get('usuario_id'),
-            $grupo_id
-        );
-
-        $score = $dadosGrupoUsuario['score'];
-
-        $this->view('dashboard/membro', [
-            'grupo_id' => $grupo_id,
-            'score' => $score
+        // ✅ UMA ÚNICA VIEW PARA OS DOIS PERFIS
+        $this->view('dashboard/index', [
+            'dados' => $dados
         ]);
     }
 }

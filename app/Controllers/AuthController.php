@@ -85,4 +85,13 @@ class AuthController extends Controller
         // Mostra formulário
         $this->view('auth/cadastro');
     }
+
+    
+    public function logout()
+    {
+        \Core\Sessao::destruir();
+        header('Location: ' . base_url('?rota=auth@login'));
+        exit;
+    }
+
 }

@@ -36,4 +36,30 @@ class Pagamento
 
         return $venc->diff($pag)->days;
     }
+
+    /**
+    * Lista pagamentos de um grupo por mês
+    */
+    public static function listarPorGrupoMes(int $grupo_id, string $mes): array
+    {
+        $db = \Core\Database::conectar();
+
+        $sql = "SELECT u.id AS usuario_id, u.nome, gu.quantidade_cotas, p.id AS pagamento_id, p.valor, p.data_pagamento
+                FROM grupos_usuarios gu
+                JOIN usuarios u ON u.id = gu.usuario_id
+                LEFT JOIN pagamentos p 
+                ON p.usuario_id = u.id 
+                AND p.grupo_id = gu.grupo_id
+                AND p.mes_referencia = :mes
+                WHERE gu.grupo_id = :grupo_id
+            ";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':grupo_id' => $grupo_id,
+            ':mes' => $mes
+        ]);
+
+        return $stmt->fetchAll();
+    }
 }

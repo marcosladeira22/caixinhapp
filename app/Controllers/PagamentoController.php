@@ -13,6 +13,30 @@ use Services\ScoreService;
 
 class PagamentoController extends Controller
 {
+
+    /**
+     * 
+     */
+    public function index()
+    {
+        \Core\Autenticacao::verificar();
+
+        $grupo_id = $_GET['grupo_id'] ?? null;
+        if (!$grupo_id) die('Grupo não informado');
+
+        \Core\Permissao::admin($grupo_id);
+
+        $mesAtual = date('Y-m-01');
+
+        $pagamentos = \Models\Pagamento::listarPorGrupoMes($grupo_id, $mesAtual);
+
+        $this->view('pagamentos/index', [
+            'grupo_id'   => $grupo_id,
+            'mes'        => $mesAtual,
+            'pagamentos' => $pagamentos
+        ]);
+    }
+
     /**
      * Tela e ação de lançamento de pagamento
      */

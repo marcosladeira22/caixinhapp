@@ -6,7 +6,7 @@ use Core\Sessao;
     <div class="container-fluid">
 
         <a class="navbar-brand" href="<?= base_url('?rota=dashboard@index') ?>">
-            Caixinha
+            CaixinhApp
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse">
@@ -39,9 +39,16 @@ use Core\Sessao;
             </ul>
 
             <!-- Usuário logado -->
-            <span class="navbar-text text-light">
-                <?= htmlspecialchars(Sessao::get('usuario_nome')) ?>
-            </span>
+            <?php
+                $nomeUsuario = Sessao::get('usuario_nome');
+            ?>
+            <?php if ($nomeUsuario): ?>
+                <span class="navbar-text text-light">
+                    <?= htmlspecialchars($nomeUsuario) ?>
+                    &nbsp;&nbsp;
+                </span>
+                <a href="<?= base_url('?rota=auth@logout') ?>" class="nav-link text-danger">Sair</a>
+            <?php endif; ?>
         </div>
     </div>
 </nav>

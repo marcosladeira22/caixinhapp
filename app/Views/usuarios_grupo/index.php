@@ -1,5 +1,8 @@
-<h3>Usuários do Grupo</h3>
-
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Usuários do Grupo</h3>
+    <?php require __DIR__ . '/../partials/voltar.php'; ?>
+</div>
+<hr>
 <a href="<?= base_url("?rota=usuarioGrupo@criar&grupo_id={$grupo_id}") ?>" 
    class="btn btn-success mb-3">Adicionar Usuário</a>
 

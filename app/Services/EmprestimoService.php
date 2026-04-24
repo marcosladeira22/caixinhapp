@@ -4,7 +4,9 @@ namespace Services;
 use Models\Grupo;
 use Models\GrupoUsuario;
 use Models\Emprestimo;
+use Services\PagamentoService;
 use Exception;
+
 
 class EmprestimoService
 {
@@ -22,6 +24,12 @@ class EmprestimoService
         if (!$dadosGrupoUsuario) {
             throw new Exception('Usuário não pertence ao grupo.');
         }
+
+        // ❌ Cota em atrso = bloqueio para Empréstimos
+        if (!PagamentoService::usuarioEstaEmDia($usuario_id, $grupo_id)) {
+            throw new Exception('Você precisa estar em dia com a cota para solicitar empréstimo.');
+        }
+
 
         // ❌ Empréstimo em aberto
         if (Emprestimo::possuiEmprestimoAberto($usuario_id, $grupo_id)) {
