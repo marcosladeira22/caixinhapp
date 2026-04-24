@@ -82,4 +82,18 @@ class UsuarioGrupoController extends Controller
             'grupo_id' => $grupo_id
         ]);
     }
+
+    public function index()
+    {
+        \Core\Autenticacao::verificar();
+
+        $grupo_id = $_GET['grupo_id'] ?? null;
+        if (!$grupo_id) die('Grupo não informado');
+
+        \Core\Permissao::admin($grupo_id);
+
+        $usuarios = \Models\GrupoUsuario::listarPorGrupo($grupo_id);
+
+        $this->view('usuarios_grupo/index', compact('usuarios', 'grupo_id'));
+    }
 }

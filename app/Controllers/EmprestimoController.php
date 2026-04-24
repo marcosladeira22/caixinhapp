@@ -9,6 +9,22 @@ use Exception;
 
 class EmprestimoController extends Controller
 {
+
+    /**
+     * 
+     */
+    public function index()
+    {
+        \Core\Autenticacao::verificar();
+
+        $grupo_id = $_GET['grupo_id'] ?? null;
+        if (!$grupo_id) die('Grupo não informado');
+
+        $emprestimos = \Models\Emprestimo::listarPorGrupo($grupo_id);
+
+        $this->view('emprestimos/index', compact('emprestimos', 'grupo_id'));
+    }
+
     /**
      * Solicitação de empréstimo (membro ou admin)
      */
@@ -39,5 +55,20 @@ class EmprestimoController extends Controller
         }
 
         $this->view('emprestimos/solicitar', compact('grupo_id', 'erro'));
+    }
+
+    /**
+     * 
+     */
+    public function inadimplentes()
+    {
+        \Core\Autenticacao::verificar();
+
+        $grupo_id = $_GET['grupo_id'] ?? null;
+        if (!$grupo_id) die('Grupo não informado');
+
+        $lista = \Models\Emprestimo::listarPorStatus($grupo_id, 'ATRASADO');
+
+        $this->view('emprestimos/inadimplentes', compact('lista', 'grupo_id'));
     }
 }

@@ -5,6 +5,7 @@ use Core\Database;
 
 class Emprestimo
 {
+
     /**
      * Cria uma solicitação de empréstimo
      */
@@ -109,5 +110,46 @@ class Emprestimo
             ':juros' => $juros,
             ':id' => $emprestimo_id
         ]);
+    }
+
+    /**
+     * 
+     */
+    public static function listarPorGrupo(int $grupo_id): array
+    {
+        $db = \Core\Database::conectar();
+
+        $sql = "SELECT e.*, u.nome
+                FROM emprestimos e
+                JOIN usuarios u ON u.id = e.usuario_id
+                WHERE e.grupo_id = :grupo_id
+                ORDER BY e.data_solicitacao DESC";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':grupo_id' => $grupo_id]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * 
+     */
+    public static function listarPorStatus(int $grupo_id, string $status): array
+    {
+        $db = \Core\Database::conectar();
+
+        $sql = "SELECT e.*, u.nome
+                FROM emprestimos e
+                JOIN usuarios u ON u.id = e.usuario_id
+                WHERE e.grupo_id = :grupo_id
+                AND e.status = :status";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':grupo_id' => $grupo_id,
+            ':status' => $status
+        ]);
+
+        return $stmt->fetchAll();
     }
 }

@@ -70,4 +70,22 @@ class GrupoUsuario
 
         return $stmt->fetch();
     }
+
+    /**
+     * Retorna lista do grupo
+     */
+    public static function listarPorGrupo(int $grupo_id): array
+    {
+        $db = \Core\Database::conectar();
+
+        $sql = "SELECT gu.*, u.nome, u.email
+                FROM grupos_usuarios gu
+                JOIN usuarios u ON u.id = gu.usuario_id
+                WHERE gu.grupo_id = :grupo_id";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':grupo_id' => $grupo_id]);
+
+        return $stmt->fetchAll();
+    }
 }
