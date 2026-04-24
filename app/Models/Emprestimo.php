@@ -88,4 +88,26 @@ class Emprestimo
             ':id'              => $emprestimo_id
         ]);
     }
+
+    /**
+     * Atualiza empréstimo para atraso
+     */
+    public static function atualizarAtraso(
+        int $emprestimo_id,
+        float $juros
+    ): void
+    {
+        $db = Database::conectar();
+
+        $sql = "UPDATE emprestimos
+                SET status = 'ATRASADO',
+                    juros_aplicados = :juros
+                WHERE id = :id";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':juros' => $juros,
+            ':id' => $emprestimo_id
+        ]);
+    }
 }
