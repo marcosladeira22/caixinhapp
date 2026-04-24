@@ -54,8 +54,7 @@
 
     <!-- Pagamentos -->
     <div class="col-md-3">
-        <a href="<?= base_url("?rota=pagamento@index&grupo_id={$grupo_id}") ?>" 
-           class="text-decoration-none text-dark">
+        <a href="<?= base_url("?rota=pagamento@index&grupo_id={$grupo_id}") ?>" class="text-decoration-none text-dark">
             <div class="card p-3 shadow h-100">
                 <h5>Pagamentos</h5>
                 <p class="mb-0">Histórico mensal</p>
@@ -63,4 +62,12 @@
         </a>
     </div>
 
+    <div class="col-md-3">
+        <a href="<?= base_url("?rota=relatorio@financeiro&grupo_id={$grupo_id}") ?>" class="text-decoration-none text-dark">        
+            <div class="card p-3 shadow h-100">
+                <h5>Relatórios</h5>
+                <p class="mb-0">Financeiro e fechamento</p>
+            </div>
+        </a>
+    </div>
 </div>
