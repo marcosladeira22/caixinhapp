@@ -106,5 +106,45 @@ class PagamentoController extends Controller
         ]);
     }
 
+    /**
+     * Tela e ação de lançamento de pagamento
+     */
+    public function pagar()
+    {
+        \Core\Autenticacao::verificar();
+
+        // Apenas ADMIN pode registrar pagamento
+        $grupo_id   = $_POST['grupo_id'] ?? null;
+        $usuario_id = $_POST['usuario_id'] ?? null;
+
+        if (!$grupo_id || !$usuario_id) {
+            die('Dados inválidos.');
+        }
+
+        \Core\Permissao::admin($grupo_id);
+
+        // Busca dados do usuário no grupo
+        $grupoUsuario = \Models\GrupoUsuario::buscar($usuario_id, $grupo_id);
+
+        if (!$grupoUsuario) {
+            die('Usuário não pertence ao grupo.');
+        }
+
+        // Busca valor da cota no grupo
+        $grupo = \Models\Grupo::buscarPorId($grupo_id);
+
+        // ✅ Chama a regra
+        \Services\PagamentoService::registrarPagamento(
+            $usuario_id,
+            $grupo_id,
+            $grupoUsuario['quantidade_cotas'],
+            $grupo['valor_cota']
+        );
+
+        // Volta para a lista de pagamentos
+        header('Location: ' . base_url("?rota=pagamento@index&grupo_id={$grupo_id}"));
+        exit;
+    }
+
     
 }

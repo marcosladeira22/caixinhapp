@@ -2,6 +2,8 @@
 namespace Services;
 
 use Models\Pagamento;
+use Services\LogService;
+use Core\Sessao;
 
 /**
  * Regras de negócio relacionadas a pagamentos de cotas
@@ -24,5 +26,32 @@ class PagamentoService
         }
 
         return false;
+    }
+
+    /**
+     * Regras de registro de pagamento de cotas
+     */
+    public static function registrarPagamento(
+        int $usuario_id,
+        int $grupo_id,
+        int $quantidade_cotas,
+        float $valor_cota
+    ): void {
+        $mesAtual = date('Y-m-01');
+
+        // Valor total = cotas × valor da cota
+        $valorTotal = $quantidade_cotas * $valor_cota;
+
+        \Models\Pagamento::registrar([
+            ':usuario_id'     => $usuario_id,
+            ':grupo_id'       => $grupo_id,
+            ':mes_referencia' => $mesAtual,
+            ':valor'          => $valorTotal,
+            ':data_pagamento' => date('Y-m-d'),
+            ':dias_atraso'    => 0
+        ]);
+
+        // ✅ Registra log
+        LogService::registrar(Sessao::get('usuario_id'),'PAGAMENTO',"Pagamento registrado para usuário {$usuario_id} no grupo {$grupo_id}");
     }
 }

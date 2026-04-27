@@ -21,13 +21,18 @@
                     <?= $p['pagamento_id']
                         ? '<span class="badge bg-success">Pago</span>'
                         : '<span class="badge bg-danger">Em atraso</span>' ?>
-                </td>
+                </td>                
                 <td>
                     <?php if (!$p['pagamento_id']): ?>
-                        <!-- aqui depois entra o botão de registrar pagamento -->
-                        Pendente
+                        <form method="post" action="<?= base_url('?rota=pagamento@pagar') ?>">
+                            <input type="hidden" name="grupo_id" value="<?= $grupo_id ?>">
+                            <input type="hidden" name="usuario_id" value="<?= $p['usuario_id'] ?>">
+                            <button class="btn btn-sm btn-success">
+                                Marcar como Pago
+                            </button>
+                        </form>
                     <?php else: ?>
-                        —
+                        <span class="text-muted">Pago</span>
                     <?php endif; ?>
                 </td>
             </tr>
