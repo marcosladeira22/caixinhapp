@@ -96,4 +96,54 @@ class UsuarioGrupoController extends Controller
 
         $this->view('usuarios_grupo/index', compact('usuarios', 'grupo_id'));
     }
+
+    public function editar()
+    {
+        \Core\Autenticacao::verificar();
+
+        $id = $_GET['id'] ?? null;
+        if (!$id) die('ID não informado.');
+
+        $registro = \Models\GrupoUsuario::buscarPorId($id);
+        if (!$registro) die('Registro não encontrado.');
+
+        // 🔒 Permissão: admin do grupo
+        \Core\Permissao::admin($registro['grupo_id']);
+
+        $this->view('usuarios_grupo/editar', [
+            'registro' => $registro
+        ]);
+    }
+
+    public function atualizar()
+    {
+        \Core\Autenticacao::verificar();
+
+        $id               = $_POST['id'];
+        $quantidade_cotas = (int) $_POST['quantidade_cotas'];
+        $nivel            = $_POST['nivel'];
+        $ativo            = isset($_POST['ativo']) ? 1 : 0;
+
+        $registro = \Models\GrupoUsuario::buscarPorId($id);
+        if (!$registro) die('Registro não encontrado.');
+
+        \Core\Permissao::admin($registro['grupo_id']);
+
+        // ❌ Não permitir que o admin se desative
+        if ($registro['usuario_id'] == \Core\Sessao::get('usuario_id') && (!$ativo || $nivel !== 'ADMIN')) {
+            die('Você não pode remover seu próprio acesso.');
+        }
+
+        \Models\GrupoUsuario::atualizar($id, $quantidade_cotas, $nivel, $ativo);
+
+        \Services\LogService::registrar(
+            \Core\Sessao::get('usuario_id'),
+            'USUARIO_GRUPO',
+            "Atualizou usuário {$registro['usuario_id']} no grupo {$registro['grupo_id']}"
+        );
+
+        header('Location: ' . base_url("?rota=usuarioGrupo@index&grupo_id={$registro['grupo_id']}"));
+        exit;
+    }
+
 }

@@ -14,6 +14,7 @@
             <th>Nível</th>
             <th>Cotas</th>
             <th>Score</th>
+            <th>Ação</th>
         </tr>
     </thead>
     <tbody>
@@ -24,6 +25,11 @@
             <td><?= $u['nivel'] ?></td>
             <td><?= $u['quantidade_cotas'] ?></td>
             <td><?= $u['score'] ?></td>
+            <td>
+                <a href="<?= base_url("?rota=usuarioGrupo@editar&id={$u['id']}") ?>">
+                    Editar
+                </a>
+            </td>
         </tr>
         <?php endforeach; ?>
     </tbody>

@@ -88,4 +88,35 @@ class GrupoUsuario
 
         return $stmt->fetchAll();
     }
+
+    /**
+     * Busca um vínculo específico pelo ID
+     */
+    public static function buscarPorId(int $id): ?array
+    {
+        $db = \Core\Database::conectar();
+
+        $stmt = $db->prepare("SELECT * FROM grupos_usuarios WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+
+        return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * Atualiza dados do usuário dentro do grupo
+     */
+    public static function atualizar(int $id, int $quantidade_cotas, string $nivel, int $ativo): void
+        {
+        $db = \Core\Database::conectar();
+
+        $stmt = $db->prepare("UPDATE grupos_usuarios SET quantidade_cotas = :cotas, nivel = :nivel, ativo = :ativo WHERE id = :id");
+
+        $stmt->execute([
+            ':cotas' => $quantidade_cotas,
+            ':nivel' => $nivel,
+            ':ativo' => $ativo,
+            ':id'    => $id
+        ]);
+    }
+
 }

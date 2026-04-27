@@ -1,6 +1,5 @@
-
 <div class="d-flex justify-content-between align-items-center mb-4">
-<h3>Cadastrar Usuário no Grupo</h3>
+    <h3>Cadastrar Usuário no Grupo</h3>
     <?php require __DIR__ . '/../partials/voltar.php'; ?>
 </div>
 <hr>
