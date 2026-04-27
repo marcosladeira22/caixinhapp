@@ -37,4 +37,49 @@ class Usuario
 
         return $db->lastInsertId();
     }
+
+    /**
+     * Busca usuário pelo ID
+     */
+    public static function buscarPorId(int $id): ?array
+    {
+        $db = \Core\Database::conectar();
+
+        $stmt = $db->prepare("SELECT * FROM usuarios WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+
+        return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * Atualiza dados básicos do usuário
+     */
+    public static function atualizarDadosBasicos(int $id, string $nome, ?string $telefone, string $sexo): void 
+    {
+        $db = \Core\Database::conectar();
+
+        $stmt = $db->prepare("UPDATE usuarios SET nome = :nome, telefone = :telefone, sexo = :sexo WHERE id = :id");
+
+        $stmt->execute([
+            ':nome'     => $nome,
+            ':telefone' => $telefone,
+            ':sexo'     => $sexo,
+            ':id'       => $id
+        ]);
+    }
+
+    /**
+     * Atualiza senha do usuário
+     */
+    public static function atualizarSenha(int $id, string $senha): void
+    {
+        $db = \Core\Database::conectar();
+
+        $stmt = $db->prepare("UPDATE usuarios SET senha = :senha WHERE id = :id ");
+
+        $stmt->execute([
+            ':senha' => password_hash($senha, PASSWORD_DEFAULT),
+            ':id'    => $id
+        ]);
+    }
 }

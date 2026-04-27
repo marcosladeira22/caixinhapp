@@ -43,11 +43,11 @@ use Core\Sessao;
                 $nomeUsuario = Sessao::get('usuario_nome');
             ?>
             <?php if ($nomeUsuario): ?>
-                <span class="navbar-text text-light">
+                <a href="<?= base_url('?rota=usuario@perfil') ?>" class="nav-link navbar-text text-light">
                     <?= htmlspecialchars($nomeUsuario) ?>
-                    &nbsp;&nbsp;
-                </span>
-                <a href="<?= base_url('?rota=auth@logout') ?>" class="nav-link text-danger">Sair</a>
+                </a>  
+                &nbsp;<span class="navbar-text">|</span>&nbsp;
+                <a href="<?= base_url('?rota=auth@logout') ?>" class="nav-link navbar-text text-danger">Sair</a>
             <?php endif; ?>
         </div>
     </div>
