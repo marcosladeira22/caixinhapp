@@ -9,31 +9,53 @@ use Core\Database;
 class Log
 {
     /**
-     * Lista logs por grupo
+     * Lista logs de um grupo com paginação
      */
-    public static function listarPorGrupo(int $grupo_id, ?string $acao = null): array
+    public static function listarPorGrupoPaginado(int $grupo_id, int $limite, int $offset): array
     {
-        $db = Database::conectar();
+        $db = \Core\Database::conectar();
 
-        $sql = "SELECT l.*, u.nome AS nome_usuario
+        $sql = "SELECT 
+                l.id,
+                l.usuario_id,
+                u.nome AS nome_usuario,
+                l.acao,
+                l.descricao,
+                l.criado_em
             FROM logs l
-            LEFT JOIN usuarios u ON u.id = l.usuario_id
+            LEFT JOIN usuarios u 
+                ON u.id = l.usuario_id
             WHERE l.descricao LIKE :grupo
+            ORDER BY l.criado_em DESC
+            LIMIT :limite OFFSET :offset
         ";
 
-        $params = [':grupo' => "%grupo {$grupo_id}%"];
-
-        // Filtro opcional por tipo de ação
-        if ($acao) {
-            $sql .= " AND l.acao = :acao";
-            $params[':acao'] = $acao;
-        }
-
-        $sql .= " ORDER BY l.criado_em DESC";
-
         $stmt = $db->prepare($sql);
-        $stmt->execute($params);
+        $stmt->bindValue(':grupo', "%grupo {$grupo_id}%");
+        $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
 
+        $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Conta quantos logs existem para um grupo
+     * Usado para paginação
+     */
+    public static function contarPorGrupo(int $grupo_id): int
+    {
+        $db = \Core\Database::conectar();
+
+        $stmt = $db->prepare("SELECT COUNT(*)
+                            FROM logs
+                            WHERE descricao LIKE :grupo
+                        ");
+
+        $stmt->execute([
+            ':grupo' => "%grupo {$grupo_id}%"
+        ]);
+
+        return (int) $stmt->fetchColumn();
     }
 }

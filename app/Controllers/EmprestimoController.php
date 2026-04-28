@@ -18,11 +18,34 @@ class EmprestimoController extends Controller
         \Core\Autenticacao::verificar();
 
         $grupo_id = $_GET['grupo_id'] ?? null;
-        if (!$grupo_id) die('Grupo não informado');
+        if (!$grupo_id) {
+            die('Grupo não informado.');
+        }
 
-        $emprestimos = \Models\Emprestimo::listarPorGrupo($grupo_id);
+        // Paginação
+        $paginaAtual = (int)($_GET['page'] ?? 1);
+        $porPagina   = (int)($_GET['per_page'] ?? 10);
 
-        $this->view('emprestimos/index', compact('emprestimos', 'grupo_id'));
+        // Total
+        $total = \Models\Emprestimo::contarPorGrupo($grupo_id);
+
+        $paginator = new \Core\Paginator(
+            $total,
+            $paginaAtual,
+            $porPagina
+        );
+
+        $emprestimos = \Models\Emprestimo::listarPorGrupoPaginado(
+            $grupo_id,
+            $paginator->porPagina,
+            $paginator->offset
+        );
+
+        $this->view('emprestimos/index', [
+            'emprestimos' => $emprestimos,
+            'grupo_id'    => $grupo_id,
+            'paginator'   => $paginator
+        ]);
     }
 
     /**

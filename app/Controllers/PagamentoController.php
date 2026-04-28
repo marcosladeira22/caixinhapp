@@ -4,6 +4,7 @@ namespace Controllers;
 use Core\Controller;
 use Core\Autenticacao;
 use Core\Sessao;
+use Core\Paginator;
 use Core\Permissao;
 use Models\Pagamento;
 use Models\GrupoUsuario;
@@ -11,35 +12,70 @@ use Models\Grupo;
 use Services\ScoreService;
 
 
+
 class PagamentoController extends Controller
 {
 
+    
     /**
-     * 
+     * Lista pagamentos de cotas do grupo (com paginação)
+     * Apenas ADMIN pode acessar
      */
     public function index()
     {
+        // 🔒 Verifica se o usuário está autenticado
         \Core\Autenticacao::verificar();
 
+        // ✅ Grupo obrigatório
         $grupo_id = $_GET['grupo_id'] ?? null;
-        if (!$grupo_id) die('Grupo não informado');
+        if (!$grupo_id) {
+            die('Grupo não informado.');
+        }
 
+        // 🔒 Somente ADMIN do grupo
         \Core\Permissao::admin($grupo_id);
 
+        // ✅ Mês de referência da cota (sempre o mês atual)
         $mesAtual = date('Y-m-01');
 
-        $pagamentos = \Models\Pagamento::listarPorGrupoMes($grupo_id, $mesAtual);
+        // ✅ Parâmetros de paginação vindos da URL
+        $paginaAtual = (int)($_GET['page'] ?? 1);
+        $porPagina   = (int)($_GET['per_page'] ?? 10);
 
+        // ✅ Total de registros (para calcular páginas reais)
+        $totalRegistros = \Models\Pagamento::contarPorGrupoMes(
+            $grupo_id,
+            $mesAtual
+        );
+
+        // ✅ Cria o paginator (objeto central da paginação)
+        $paginator = new \Core\Paginator(
+            $totalRegistros,
+            $paginaAtual,
+            $porPagina
+        );
+
+        // ✅ Busca os pagamentos já paginados
+        $pagamentos = \Models\Pagamento::listarPorGrupoMesPaginado(
+            $grupo_id,
+            $mesAtual,
+            $paginator->porPagina,
+            $paginator->offset
+        );
+
+        // ✅ Envia tudo para a view (NADA solto)
         $this->view('pagamentos/index', [
             'grupo_id'   => $grupo_id,
             'mes'        => $mesAtual,
-            'pagamentos' => $pagamentos
+            'pagamentos' => $pagamentos,
+            'paginator'  => $paginator
         ]);
     }
 
+
     /**
-     * Tela e ação de lançamento de pagamento
-     */
+    * Tela e ação de lançamento de pagamento
+    */
     public function criar()
     {
         // 🔒 Usuário precisa estar logado
@@ -107,8 +143,8 @@ class PagamentoController extends Controller
     }
 
     /**
-     * Tela e ação de lançamento de pagamento
-     */
+    * Tela e ação de lançamento de pagamento
+    */
     public function pagar()
     {
         \Core\Autenticacao::verificar();
@@ -124,6 +160,7 @@ class PagamentoController extends Controller
         \Core\Permissao::admin($grupo_id);
 
         // Busca dados do usuário no grupo
+
         $grupoUsuario = \Models\GrupoUsuario::buscar($usuario_id, $grupo_id);
 
         if (!$grupoUsuario) {

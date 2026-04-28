@@ -88,13 +88,34 @@ class UsuarioGrupoController extends Controller
         \Core\Autenticacao::verificar();
 
         $grupo_id = $_GET['grupo_id'] ?? null;
-        if (!$grupo_id) die('Grupo não informado');
+        if (!$grupo_id) {
+            die('Grupo não informado.');
+        }
 
         \Core\Permissao::admin($grupo_id);
 
-        $usuarios = \Models\GrupoUsuario::listarPorGrupo($grupo_id);
+        // Paginação
+        $paginaAtual = (int)($_GET['page'] ?? 1);
+        $porPagina   = (int)($_GET['per_page'] ?? 10);
 
-        $this->view('usuarios_grupo/index', compact('usuarios', 'grupo_id'));
+        // Total de registros
+        $total = \Models\GrupoUsuario::contarPorGrupo($grupo_id);
+
+        // Paginator
+        $paginator = new \Core\Paginator($total, $paginaAtual, $porPagina);
+
+        // Lista paginada
+        $usuarios = \Models\GrupoUsuario::listarPorGrupoPaginado(
+            $grupo_id,
+            $paginator->porPagina,
+            $paginator->offset
+        );
+
+        $this->view('usuarios_grupo/index', [
+            'usuarios'  => $usuarios,
+            'grupo_id'  => $grupo_id,
+            'paginator' => $paginator
+        ]);
     }
 
     public function editar()

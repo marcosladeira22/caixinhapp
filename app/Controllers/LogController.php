@@ -13,25 +13,36 @@ class LogController extends Controller
 {
     public function index()
     {
-        Autenticacao::verificar();
+        \Core\Autenticacao::verificar();
 
         $grupo_id = $_GET['grupo_id'] ?? null;
         if (!$grupo_id) {
             die('Grupo não informado.');
         }
 
-        // 🔒 Apenas ADMIN pode ver logs
-        Permissao::admin($grupo_id);
+        \Core\Permissao::admin($grupo_id);
 
-        // Filtro opcional de ação
-        $acao = $_GET['acao'] ?? null;
+        // Paginação
+        $paginaAtual = (int)($_GET['page'] ?? 1);
+        $porPagina   = (int)($_GET['per_page'] ?? 10);
 
-        $logs = Log::listarPorGrupo($grupo_id, $acao);
+        // Total de registros
+        $total = \Models\Log::contarPorGrupo($grupo_id);
+
+        // Paginator
+        $paginator = new \Core\Paginator($total, $paginaAtual, $porPagina);
+
+        // Logs paginados
+        $logs = \Models\Log::listarPorGrupoPaginado(
+            $grupo_id,
+            $paginator->porPagina,
+            $paginator->offset
+        );
 
         $this->view('logs/index', [
-            'logs' => $logs,
-            'grupo_id' => $grupo_id,
-            'acao' => $acao
+            'logs'      => $logs,
+            'grupo_id'  => $grupo_id,
+            'paginator' => $paginator
         ]);
     }
 }

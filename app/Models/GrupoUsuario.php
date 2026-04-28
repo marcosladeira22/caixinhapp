@@ -106,7 +106,7 @@ class GrupoUsuario
      * Atualiza dados do usuário dentro do grupo
      */
     public static function atualizar(int $id, int $quantidade_cotas, string $nivel, int $ativo): void
-        {
+    {
         $db = \Core\Database::conectar();
 
         $stmt = $db->prepare("UPDATE grupos_usuarios SET quantidade_cotas = :cotas, nivel = :nivel, ativo = :ativo WHERE id = :id");
@@ -118,5 +118,59 @@ class GrupoUsuario
             ':id'    => $id
         ]);
     }
+
+    /**
+    * Lista usuários de um grupo com paginação
+    */
+    public static function listarPorGrupoPaginado(int $grupo_id, int $limite, int $offset): array
+    {
+
+        $db = \Core\Database::conectar();
+
+        $sql = "SELECT 
+                gu.id AS grupo_usuario_id,
+                gu.usuario_id,
+                gu.quantidade_cotas,
+                gu.nivel,
+                gu.ativo,
+                u.nome,
+                u.email
+            FROM grupos_usuarios gu
+            JOIN usuarios u 
+                ON u.id = gu.usuario_id
+            WHERE gu.grupo_id = :grupo_id
+            ORDER BY u.nome ASC
+            LIMIT :limite OFFSET :offset
+            ";
+
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':grupo_id', $grupo_id, \PDO::PARAM_INT);
+        $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Conta quantos usuários existem em um grupo
+     * Usado para paginação
+     */
+    public static function contarPorGrupo(int $grupo_id): int
+    {
+        $db = \Core\Database::conectar();
+
+        $stmt = $db->prepare("SELECT COUNT(*)
+                        FROM grupos_usuarios
+                        WHERE grupo_id = :grupo_id
+                    ");
+
+        $stmt->execute([
+            ':grupo_id' => $grupo_id
+        ]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
 
 }
