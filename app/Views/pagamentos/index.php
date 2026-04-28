@@ -4,7 +4,7 @@
 </div>
 <hr>
 <table class="table table-bordered">
-    <thead>
+    <thead class="table-light text-center">
         <tr>
             <th>Usuário</th>
             <th>Cotas</th>

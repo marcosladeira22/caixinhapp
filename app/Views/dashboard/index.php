@@ -52,21 +52,30 @@
             <a href="<?= base_url("?rota=emprestimo@inadimplentes&grupo_id={$dados['grupo_id']}") ?>" class="text-decoration-none text-dark">
                 <div class="card p-3 shadow h-100">
                     <h5>Inadimplentes</h5>
-                    <p class="mb-0">Usuários com atraso</p>
+                    <p>Usuários com atraso</p>
                 </div>
             </a>
         </div>
 
         <!-- Relatórios -->
         <div class="col-md-3">
-        <a href="<?= base_url("?rota=relatorio@financeiro&grupo_id={$dados['grupo_id']}") ?>" class="text-decoration-none text-dark">        
-            <div class="card p-3 shadow h-100">
-                <h5>Relatórios</h5>
-                <p class="mb-0">Financeiro e fechamento</p>
-            </div>
-        </a>
-    </div>
+            <a href="<?= base_url("?rota=relatorio@financeiro&grupo_id={$dados['grupo_id']}") ?>" class="text-decoration-none text-dark">        
+                <div class="card p-3 shadow h-100">
+                    <h5>Relatórios</h5>
+                    <p>Financeiro e fechamento</p>
+                </div>
+            </a>
+        </div>
 
+        <!-- Auditoria -->
+        <div class="col-md-3">
+            <a href="<?= base_url("?rota=log@index&grupo_id={$dados['grupo_id']}") ?>" class="text-decoration-none text-dark">
+                <div class="card p-3 shadow h-100">
+                    <h5>Logs</h5>
+                    <p>Auditoria do sistema</p>
+                </div>
+            </a>
+        </div>
     </div>
 
 <?php else: ?>

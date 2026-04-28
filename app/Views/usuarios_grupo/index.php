@@ -7,7 +7,7 @@
    class="btn btn-success mb-3">Adicionar Usuário</a>
 
 <table class="table table-bordered">
-    <thead>
+    <thead class="table-light text-center">
         <tr>
             <th>Nome</th>
             <th>E-mail</th>
