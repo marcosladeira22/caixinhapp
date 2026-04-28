@@ -42,7 +42,8 @@ class LogController extends Controller
         $this->view('logs/index', [
             'logs'      => $logs,
             'grupo_id'  => $grupo_id,
-            'paginator' => $paginator
+            'paginator' => $paginator,
+            'acao'      => $acao ?? null
         ]);
     }
 }

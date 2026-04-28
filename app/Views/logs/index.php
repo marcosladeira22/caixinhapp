@@ -24,48 +24,31 @@
 
     <button class="btn btn-secondary ms-2">Filtrar</button>
 </form>
-
-<?php if (!$paginator->temResultados()): ?>
-    <div class="alert alert-info">
-        Nenhum log encontrado.
-    </div>
-<?php else: ?>
-    <table class="table table-striped">
-        <thead class="table-light text-center">
+<table class="table table-striped">
+    <thead class="table-light text-center">
+        <tr>
+            <th>Data</th>
+            <th>Usuário</th>
+            <th>Ação</th>
+            <th>Descrição</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($logs as $log): ?>
             <tr>
-                <th>Data</th>
-                <th>Usuário</th>
-                <th>Ação</th>
-                <th>Descrição</th>
+                <td><?= date('d/m/Y H:i', strtotime($log['criado_em'])) ?></td>
+                <td><?= htmlspecialchars($log['nome_usuario'] ?? 'Sistema') ?></td>
+                <td><?= htmlspecialchars($log['acao']) ?></td>
+                <td><?= htmlspecialchars($log['descricao']) ?></td>
             </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($logs as $log): ?>
-                <tr>
-                    <td><?= date('d/m/Y H:i', strtotime($log['criado_em'])) ?></td>
-                    <td><?= htmlspecialchars($log['nome_usuario'] ?? 'Sistema') ?></td>
-                    <td><?= htmlspecialchars($log['acao']) ?></td>
-                    <td><?= htmlspecialchars($log['descricao']) ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+        <?php endforeach; ?>
+    </tbody>
+</table>
 
-    <?php if ($paginator->totalPaginas > 1): ?>
-        <nav>
-            <ul class="pagination justify-content-center">
-                <?php for ($i = 1; $i <= $paginator->totalPaginas; $i++): ?>
-                    <li class="page-item <?= $i === $paginator->paginaAtual ? 'active' : '' ?>">
-                        <a class="page-link"
-                        href="<?= base_url('?rota=log@index') .
-                                '&grupo_id=' . (int)$grupo_id .
-                                '&acao=' . urlencode($acao ?? '') .
-                                '&page=' . $i ?>">
-                            <?= $i ?>
-                        </a>
-                    </li>
-                <?php endfor; ?>
-            </ul>
-        </nav>
-    <?php endif; ?>
-<?php endif; ?>
+<?php
+$rota = 'log@index';
+$extras = [
+    'acao' => $acao
+];
+require __DIR__ . '/../partials/paginator.php';
+?>

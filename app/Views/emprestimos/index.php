@@ -4,20 +4,6 @@
     <?php require __DIR__ . '/../partials/voltar.php'; ?>
 </div>
 <hr>
-<form method="get" class="mb-3">
-    <input type="hidden" name="rota" value="usuarioGrupo@index">
-    <input type="hidden" name="grupo_id" value="<?= (int)$grupo_id ?>">
-    <input type="hidden" name="page" value="1">
-
-    <label class="me-2">Resultados por página:</label>
-    <select name="per_page" onchange="this.form.submit()">
-        <?php foreach ([5, 10, 20, 50] as $n): ?>
-            <option value="<?= $n ?>" <?= $paginator->porPagina == $n ? 'selected' : '' ?>>
-                <?= $n ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-</form>
 <table class="table table-striped">
     <thead class="table-light text-center">
         <tr>
@@ -46,4 +32,8 @@
         <?php endforeach; ?>
     </tbody>
 </table>
-<?php require __DIR__.'/../partials/pagination.php'; ?>
+<?php
+$rota = 'emprestimo@index';
+$extras = [];
+require __DIR__ . '/../partials/paginator.php';
+?>
