@@ -3,16 +3,22 @@ namespace Core;
 
 use PDO;
 use PDOException;
+use RuntimeException;
 
+/**
+ * Gerenciador de conexão com o banco de dados
+ */
 class Database
 {
-    private static $instancia;
+    private static ?PDO $instancia = null;
 
-    public static function conectar()
+    /**
+     * Retorna instância única de PDO
+     */
+    public static function conectar(): PDO
     {
-        if (!self::$instancia) {
+        if (self::$instancia === null) {
 
-            // Carrega configurações do banco
             $config = require __DIR__ . '/../../config/banco.php';
 
             $dsn = sprintf(
@@ -28,13 +34,12 @@ class Database
                     $config['usuario'],
                     $config['senha'],
                     [
-                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     ]
                 );
             } catch (PDOException $e) {
-                // Em desenvolvimento, mostramos o erro
-                die('Erro de conexão: ' . $e->getMessage());
+                throw new RuntimeException('Erro ao conectar ao banco de dados.');
             }
         }
 

@@ -1,16 +1,21 @@
 <?php
 namespace Core;
-use Services\InadimplenciaService;
 
+/**
+ * Classe responsável por iniciar a aplicação
+ * (Front Controller)
+ */
 class App
 {
-    public function executar()
+    /**
+     * Executa o ciclo da aplicação
+     */
+    public function executar(): void
     {
+        // Inicia sessão global do sistema
         Sessao::iniciar();
 
-        // ✅ Processa inadimplência sempre que o sistema é acessado
-        InadimplenciaService::processar();
-
+        // Resolve rota e despacha controller
         $router = new Router();
         $router->resolver();
     }

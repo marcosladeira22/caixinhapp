@@ -5,13 +5,16 @@
  */
 function base_url(string $caminho = ''): string
 {
-    $config = require __DIR__ . '/../../config/app.php';
+    static $baseUrl = null;
 
-    $url = rtrim($config['base_url'], '/');
-
-    if ($caminho) {
-        $url .= '/' . ltrim($caminho, '/');
+    if ($baseUrl === null) {
+        $config  = require __DIR__ . '/../../config/app.php';
+        $baseUrl = rtrim($config['base_url'], '/');
     }
 
-    return $url;
+    if ($caminho) {
+        return $baseUrl . '/' . ltrim($caminho, '/');
+    }
+
+    return $baseUrl;
 }

@@ -1,19 +1,27 @@
 <?php
 namespace Core;
 
+/**
+ * Responsável apenas por verificar autenticação
+ */
 class Autenticacao
 {
-    
-    public static function verificar()
+    /**
+     * Verifica se o usuário está autenticado
+     */
+    public static function verificar(): bool
     {
-        // ✅ Garante que a sessão esteja ativa
-        Sessao::iniciar();
+        return Sessao::get('usuario_id') !== null;
+    }
 
-        // ✅ Verifica se o usuário está logado
-        if (!Sessao::get('usuario_id')) {
+    /**
+     * Garante autenticação ou redireciona
+     */
+    public static function exigirLogin(): void
+    {
+        if (!self::verificar()) {
             header('Location: ' . base_url('?rota=auth@login'));
             exit;
         }
     }
-
 }
