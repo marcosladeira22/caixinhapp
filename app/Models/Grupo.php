@@ -3,38 +3,69 @@ namespace Models;
 
 use Core\Database;
 
+/**
+ * Model Grupo
+ * Responsável apenas por persistência de dados do grupo
+ */
 class Grupo
 {
-    // Cria um novo grupo
-    public static function criar($dados)
-    {
+    /**
+     * Cria um novo grupo
+     */
+    public static function criar(
+        string $nome,
+        float $valorCota,
+        float $emprestimoMin,
+        float $emprestimoMax,
+        string $taxaTipo,
+        float $taxaValor,
+        string $jurosTipo,
+        float $jurosValor,
+        int $diasTolerancia
+    ): int {
         $db = Database::conectar();
 
-        $sql = "INSERT INTO grupos 
-            (nome, valor_cota, emprestimo_min, emprestimo_max, taxa_tipo, taxa_valor, juros_tipo, juros_valor, dias_tolerancia)
-            VALUES 
-            (:nome, :valor_cota, :emprestimo_min, :emprestimo_max, :taxa_tipo, :taxa_valor, :juros_tipo, :juros_valor, :dias_tolerancia)";
+        $stmt = $db->prepare(
+            'INSERT INTO grupos
+             (nome, valor_cota, emprestimo_min, emprestimo_max,
+              taxa_tipo, taxa_valor, juros_tipo, juros_valor, dias_tolerancia)
+             VALUES
+             (:nome, :valor_cota, :emprestimo_min, :emprestimo_max,
+              :taxa_tipo, :taxa_valor, :juros_tipo, :juros_valor, :dias_tolerancia)'
+        );
 
-        $stmt = $db->prepare($sql);
-        $stmt->execute($dados);
+        $stmt->execute([
+            ':nome'             => $nome,
+            ':valor_cota'       => $valorCota,
+            ':emprestimo_min'   => $emprestimoMin,
+            ':emprestimo_max'   => $emprestimoMax,
+            ':taxa_tipo'        => $taxaTipo,
+            ':taxa_valor'       => $taxaValor,
+            ':juros_tipo'       => $jurosTipo,
+            ':juros_valor'      => $jurosValor,
+            ':dias_tolerancia'  => $diasTolerancia,
+        ]);
 
-        // Retorna o ID do grupo criado
-        return $db->lastInsertId();
+        return (int) $db->lastInsertId();
     }
 
-    // Lista grupos de um usuário
-    public static function listarPorUsuario($usuario_id)
+    /**
+     * Lista os grupos aos quais um usuário pertence
+     */
+    public static function listarPorUsuario(int $usuarioId): array
     {
         $db = Database::conectar();
 
-        $sql = "SELECT g.*, gu.nivel 
-                FROM grupos g
-                JOIN grupos_usuarios gu ON gu.grupo_id = g.id
-                WHERE gu.usuario_id = :usuario_id";
+        $stmt = $db->prepare(
+            'SELECT g.*, gu.nivel
+             FROM grupos g
+             INNER JOIN grupos_usuarios gu ON gu.grupo_id = g.id
+             WHERE gu.usuario_id = :usuario_id'
+        );
 
-        $stmt = $db->prepare($sql);
-        $stmt->bindValue(':usuario_id', $usuario_id);
-        $stmt->execute();
+        $stmt->execute([
+            ':usuario_id' => $usuarioId
+        ]);
 
         return $stmt->fetchAll();
     }
@@ -42,20 +73,21 @@ class Grupo
     /**
      * Busca um grupo pelo ID
      */
-    public static function buscarPorId(int $grupo_id): ?array
+    public static function buscarPorId(int $grupoId): ?array
     {
         $db = Database::conectar();
 
-        $sql  = "SELECT * FROM grupos WHERE id = :id LIMIT 1";
-        $stmt = $db->prepare($sql);
+        $stmt = $db->prepare(
+            'SELECT *
+             FROM grupos
+             WHERE id = :id
+             LIMIT 1'
+        );
+
         $stmt->execute([
-            ':id' => $grupo_id
+            ':id' => $grupoId
         ]);
 
-        $grupo = $stmt->fetch();
-
-        // Retorna null se não encontrar
-        return $grupo ?: null;
+        return $stmt->fetch() ?: null;
     }
-
 }

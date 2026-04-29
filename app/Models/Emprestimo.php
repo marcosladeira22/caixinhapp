@@ -3,157 +3,79 @@ namespace Models;
 
 use Core\Database;
 
+/**
+ * Model Emprestimo
+ * Responsável apenas por persistência e consultas
+ */
 class Emprestimo
 {
-
     /**
      * Cria uma solicitação de empréstimo
      */
-    public static function criar(array $dados): int
-    {
+    public static function criar(
+        int $usuarioId,
+        int $grupoId,
+        float $valorSolicitado,
+        float $taxaAplicada,
+        float $valorTotal
+    ): int {
         $db = Database::conectar();
 
-        $sql = "INSERT INTO emprestimos
-                (usuario_id, grupo_id, valor_solicitado, taxa_aplicada, valor_total)
-                VALUES
-                (:usuario_id, :grupo_id, :valor_solicitado, :taxa_aplicada, :valor_total)";
+        $stmt = $db->prepare(
+            'INSERT INTO emprestimos
+             (usuario_id, grupo_id, valor_solicitado, taxa_aplicada, valor_total)
+             VALUES
+             (:usuario_id, :grupo_id, :valor_solicitado, :taxa_aplicada, :valor_total)'
+        );
 
-        $stmt = $db->prepare($sql);
-        $stmt->execute($dados);
-
-        return $db->lastInsertId();
-    }
-
-    /**
-     * Verifica se o usuário possui empréstimo em aberto
-     */
-    public static function possuiEmprestimoAberto(int $usuario_id, int $grupo_id): bool
-    {
-        $db = Database::conectar();
-
-        $sql = "SELECT COUNT(*) FROM emprestimos
-                WHERE usuario_id = :usuario_id
-                AND grupo_id = :grupo_id
-                AND status IN ('PENDENTE','APROVADO')";
-
-        $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':usuario_id' => $usuario_id,
-            ':grupo_id' => $grupo_id
+            ':usuario_id'       => $usuarioId,
+            ':grupo_id'         => $grupoId,
+            ':valor_solicitado' => $valorSolicitado,
+            ':taxa_aplicada'    => $taxaAplicada,
+            ':valor_total'      => $valorTotal
         ]);
 
-        return $stmt->fetchColumn() > 0;
+        return (int) $db->lastInsertId();
     }
 
     /**
-     * Lista empréstimos pendentes de um grupo
+     * Verifica se existe empréstimo em aberto (consulta)
      */
-    public static function listarPendentesPorGrupo(int $grupo_id): array
-    {
+    public static function existeEmprestimoAberto(
+        int $usuarioId,
+        int $grupoId
+    ): bool {
         $db = Database::conectar();
 
-        $sql = "SELECT e.*, u.nome AS nome_usuario
-                FROM emprestimos e
-                JOIN usuarios u ON u.id = e.usuario_id
-                WHERE e.grupo_id = :grupo_id
-                AND e.status = 'PENDENTE'
-                ORDER BY e.data_solicitacao ASC";
+        $stmt = $db->prepare(
+            'SELECT COUNT(*)
+             FROM emprestimos
+             WHERE usuario_id = :usuario_id
+               AND grupo_id = :grupo_id
+               AND status IN ("PENDENTE","APROVADO")'
+        );
 
-        $stmt = $db->prepare($sql);
-        $stmt->execute([':grupo_id' => $grupo_id]);
-
-        return $stmt->fetchAll();
-    }
-
-    /**
-     * Atualiza status do empréstimo
-     */
-    public static function atualizarStatus(int $emprestimo_id, string $status, ?string $data_vencimento = null): void
-    {
-        $db = Database::conectar();
-
-        $sql = "UPDATE emprestimos
-                SET status = :status,
-                    data_aprovacao = NOW(),
-                    data_vencimento = :data_vencimento
-                WHERE id = :id";
-
-        $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':status'          => $status,
-            ':data_vencimento' => $data_vencimento,
-            ':id'              => $emprestimo_id
-        ]);
-    }
-
-    /**
-     * Atualiza empréstimo para atraso
-     */
-    public static function atualizarAtraso(int $emprestimo_id, float $juros): void
-    {
-        $db = Database::conectar();
-
-        $sql = "UPDATE emprestimos
-                SET status = 'ATRASADO',
-                    juros_aplicados = :juros
-                WHERE id = :id";
-
-        $stmt = $db->prepare($sql);
-        $stmt->execute([
-            ':juros' => $juros,
-            ':id' => $emprestimo_id
-        ]);
-    }
-
-    /**
-     * 
-     */
-    public static function listarPorGrupo(int $grupo_id): array
-    {
-        $db = \Core\Database::conectar();
-
-        $sql = "SELECT e.*, u.nome
-                FROM emprestimos e
-                JOIN usuarios u ON u.id = e.usuario_id
-                WHERE e.grupo_id = :grupo_id
-                ORDER BY e.data_solicitacao DESC";
-
-        $stmt = $db->prepare($sql);
-        $stmt->execute([':grupo_id' => $grupo_id]);
-
-        return $stmt->fetchAll();
-    }
-
-    /**
-     * 
-     */
-    public static function listarPorStatus(int $grupo_id, string $status): array
-    {
-        $db = \Core\Database::conectar();
-
-        $sql = "SELECT e.*, u.nome
-                FROM emprestimos e
-                JOIN usuarios u ON u.id = e.usuario_id
-                WHERE e.grupo_id = :grupo_id
-                AND e.status = :status";
-
-        $stmt = $db->prepare($sql);
-        $stmt->execute([
-            ':grupo_id' => $grupo_id,
-            ':status' => $status
+            ':usuario_id' => $usuarioId,
+            ':grupo_id'   => $grupoId
         ]);
 
-        return $stmt->fetchAll();
+        return (int) $stmt->fetchColumn() > 0;
     }
 
     /**
      * Lista empréstimos do grupo com paginação
      */
-    public static function listarPorGrupoPaginado(int $grupo_id, int $limite, int $offset): array
-    {
-        $db = \Core\Database::conectar();
+    public static function listarPorGrupoPaginado(
+        int $grupoId,
+        int $limite,
+        int $offset
+    ): array {
+        $db = Database::conectar();
 
-        $sql = "SELECT
+        $stmt = $db->prepare(
+            'SELECT
                 e.id AS emprestimo_id,
                 e.usuario_id,
                 e.valor_solicitado,
@@ -161,38 +83,117 @@ class Emprestimo
                 e.status,
                 e.data_vencimento,
                 u.nome
-            FROM emprestimos e
-            JOIN usuarios u
-            ON u.id = e.usuario_id
-            WHERE e.grupo_id = :grupo_id
-            ORDER BY e.data_solicitacao DESC
-            LIMIT :limite OFFSET :offset
-        ";
+             FROM emprestimos e
+             INNER JOIN usuarios u ON u.id = e.usuario_id
+             WHERE e.grupo_id = :grupo_id
+             ORDER BY e.data_solicitacao DESC
+             LIMIT :limite OFFSET :offset'
+        );
 
-        $stmt = $db->prepare($sql);
-        $stmt->bindValue(':grupo_id', $grupo_id, \PDO::PARAM_INT);
+        $stmt->bindValue(':grupo_id', $grupoId, \PDO::PARAM_INT);
         $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
 
         $stmt->execute();
+
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Lista empréstimos por status (ex: ATRASADO)
+     */
+    public static function listarPorStatus(
+        int $grupoId,
+        string $status
+    ): array {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'SELECT
+                e.id AS emprestimo_id,
+                e.usuario_id,
+                e.valor_solicitado,
+                e.valor_total,
+                e.status,
+                e.data_vencimento,
+                u.nome
+             FROM emprestimos e
+             INNER JOIN usuarios u ON u.id = e.usuario_id
+             WHERE e.grupo_id = :grupo_id
+               AND e.status = :status'
+        );
+
+        $stmt->execute([
+            ':grupo_id' => $grupoId,
+            ':status'   => $status
+        ]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Atualiza status do empréstimo
+     */
+    public static function atualizarStatus(
+        int $emprestimoId,
+        string $status,
+        ?string $dataVencimento
+    ): void {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'UPDATE emprestimos
+             SET status = :status,
+                 data_aprovacao = NOW(),
+                 data_vencimento = :data_vencimento
+             WHERE id = :id'
+        );
+
+        $stmt->execute([
+            ':status'          => $status,
+            ':data_vencimento' => $dataVencimento,
+            ':id'              => $emprestimoId
+        ]);
+    }
+
+    /**
+     * Atualiza empréstimo para atraso
+     */
+    public static function marcarComoAtrasado(
+        int $emprestimoId,
+        float $jurosAplicados
+    ): void {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'UPDATE emprestimos
+             SET status = "ATRASADO",
+                 juros_aplicados = :juros
+             WHERE id = :id'
+        );
+
+        $stmt->execute([
+            ':juros' => $jurosAplicados,
+            ':id'    => $emprestimoId
+        ]);
     }
 
     /**
      * Conta quantos empréstimos existem em um grupo
      * Usado para paginação
      */
-    public static function contarPorGrupo(int $grupo_id): int
+    public static function contarPorGrupo(int $grupoId): int
     {
-        $db = \Core\Database::conectar();
+        $db = Database::conectar();
 
-        $stmt = $db->prepare("SELECT COUNT(*)
-                    FROM emprestimos
-                    WHERE grupo_id = :grupo_id
-                ");
+        $stmt = $db->prepare(
+            'SELECT COUNT(*)
+             FROM emprestimos
+             WHERE grupo_id = :grupo_id'
+        );
 
         $stmt->execute([
-            ':grupo_id' => $grupo_id
+            ':grupo_id' => $grupoId
         ]);
 
         return (int) $stmt->fetchColumn();

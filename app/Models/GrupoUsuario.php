@@ -3,46 +3,59 @@ namespace Models;
 
 use Core\Database;
 
+/**
+ * Model GrupoUsuario
+ * Representa o vínculo entre usuário e grupo
+ */
 class GrupoUsuario
 {
-    // Associa um usuário a um grupo
-    public static function adicionarUsuarioAoGrupo($usuario_id, $grupo_id, $nivel, $quantidade_cotas)
-    {
-        if (!$usuario_id) {
-            throw new \Exception('Usuário inválido para associação ao grupo.');
-        }
-
+    /**
+     * Associa um usuário a um grupo
+     */
+    public static function adicionar(
+        int $usuarioId,
+        int $grupoId,
+        string $nivel,
+        int $quantidadeCotas
+    ): void {
         $db = Database::conectar();
 
-        $sql = "INSERT INTO grupos_usuarios 
-            (usuario_id, grupo_id, nivel, quantidade_cotas)
-            VALUES 
-            (:usuario_id, :grupo_id, :nivel, :quantidade_cotas)";
+        $stmt = $db->prepare(
+            'INSERT INTO grupos_usuarios
+             (usuario_id, grupo_id, nivel, quantidade_cotas)
+             VALUES
+             (:usuario_id, :grupo_id, :nivel, :quantidade_cotas)'
+        );
 
-        $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':usuario_id'       => $usuario_id,
-            ':grupo_id'         => $grupo_id,
+            ':usuario_id'       => $usuarioId,
+            ':grupo_id'         => $grupoId,
             ':nivel'            => $nivel,
-            ':quantidade_cotas' => $quantidade_cotas
+            ':quantidade_cotas' => $quantidadeCotas
         ]);
     }
 
-    // Verifica nível do usuário em um grupo
-    public static function nivelUsuarioNoGrupo($usuario_id, $grupo_id)
-    {
+    /**
+     * Retorna o nível do usuário em um grupo
+     */
+    public static function nivelNoGrupo(
+        int $usuarioId,
+        int $grupoId
+    ): ?string {
         $db = Database::conectar();
 
-        $sql = "SELECT nivel 
-                FROM grupos_usuarios 
-                WHERE usuario_id = :usuario_id 
-                AND grupo_id = :grupo_id 
-                AND ativo = 1";
+        $stmt = $db->prepare(
+            'SELECT nivel
+             FROM grupos_usuarios
+             WHERE usuario_id = :usuario_id
+               AND grupo_id = :grupo_id
+               AND ativo = 1
+             LIMIT 1'
+        );
 
-        $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':usuario_id' => $usuario_id,
-            ':grupo_id' => $grupo_id
+            ':usuario_id' => $usuarioId,
+            ':grupo_id'   => $grupoId
         ]);
 
         $resultado = $stmt->fetch();
@@ -51,42 +64,29 @@ class GrupoUsuario
     }
 
     /**
-     * Retorna dados do usuário dentro do grupo
+     * Busca o vínculo ativo de um usuário em um grupo
      */
-    public static function buscar($usuario_id, $grupo_id)
-    {
+    public static function buscarPorUsuarioEGrupo(
+        int $usuarioId,
+        int $grupoId
+    ): ?array {
         $db = Database::conectar();
 
-        $sql = "SELECT * FROM grupos_usuarios
-                WHERE usuario_id = :usuario_id
-                AND grupo_id = :grupo_id
-                AND ativo = 1";
+        $stmt = $db->prepare(
+            'SELECT *
+             FROM grupos_usuarios
+             WHERE usuario_id = :usuario_id
+               AND grupo_id = :grupo_id
+               AND ativo = 1
+             LIMIT 1'
+        );
 
-        $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':usuario_id' => $usuario_id,
-            ':grupo_id' => $grupo_id
+            ':usuario_id' => $usuarioId,
+            ':grupo_id'   => $grupoId
         ]);
 
-        return $stmt->fetch();
-    }
-
-    /**
-     * Retorna lista do grupo
-     */
-    public static function listarPorGrupo(int $grupo_id): array
-    {
-        $db = \Core\Database::conectar();
-
-        $sql = "SELECT gu.*, u.nome, u.email
-                FROM grupos_usuarios gu
-                JOIN usuarios u ON u.id = gu.usuario_id
-                WHERE gu.grupo_id = :grupo_id";
-
-        $stmt = $db->prepare($sql);
-        $stmt->execute([':grupo_id' => $grupo_id]);
-
-        return $stmt->fetchAll();
+        return $stmt->fetch() ?: null;
     }
 
     /**
@@ -94,10 +94,18 @@ class GrupoUsuario
      */
     public static function buscarPorId(int $id): ?array
     {
-        $db = \Core\Database::conectar();
+        $db = Database::conectar();
 
-        $stmt = $db->prepare("SELECT * FROM grupos_usuarios WHERE id = :id");
-        $stmt->execute([':id' => $id]);
+        $stmt = $db->prepare(
+            'SELECT *
+             FROM grupos_usuarios
+             WHERE id = :id
+             LIMIT 1'
+        );
+
+        $stmt->execute([
+            ':id' => $id
+        ]);
 
         return $stmt->fetch() ?: null;
     }
@@ -105,29 +113,42 @@ class GrupoUsuario
     /**
      * Atualiza dados do usuário dentro do grupo
      */
-    public static function atualizar(int $id, int $quantidade_cotas, string $nivel, int $ativo): void
-    {
-        $db = \Core\Database::conectar();
+    public static function atualizar(
+        int $id,
+        int $quantidadeCotas,
+        string $nivel,
+        bool $ativo
+    ): void {
+        $db = Database::conectar();
 
-        $stmt = $db->prepare("UPDATE grupos_usuarios SET quantidade_cotas = :cotas, nivel = :nivel, ativo = :ativo WHERE id = :id");
+        $stmt = $db->prepare(
+            'UPDATE grupos_usuarios
+             SET quantidade_cotas = :quantidade_cotas,
+                 nivel = :nivel,
+                 ativo = :ativo
+             WHERE id = :id'
+        );
 
         $stmt->execute([
-            ':cotas' => $quantidade_cotas,
-            ':nivel' => $nivel,
-            ':ativo' => $ativo,
-            ':id'    => $id
+            ':quantidade_cotas' => $quantidadeCotas,
+            ':nivel'            => $nivel,
+            ':ativo'            => $ativo ? 1 : 0,
+            ':id'               => $id
         ]);
     }
 
     /**
-    * Lista usuários de um grupo com paginação
-    */
-    public static function listarPorGrupoPaginado(int $grupo_id, int $limite, int $offset): array
-    {
+     * Lista usuários de um grupo com paginação
+     */
+    public static function listarPorGrupoPaginado(
+        int $grupoId,
+        int $limite,
+        int $offset
+    ): array {
+        $db = Database::conectar();
 
-        $db = \Core\Database::conectar();
-
-        $sql = "SELECT 
+        $stmt = $db->prepare(
+            'SELECT
                 gu.id AS grupo_usuario_id,
                 gu.usuario_id,
                 gu.quantidade_cotas,
@@ -135,20 +156,19 @@ class GrupoUsuario
                 gu.ativo,
                 u.nome,
                 u.email
-            FROM grupos_usuarios gu
-            JOIN usuarios u 
-                ON u.id = gu.usuario_id
-            WHERE gu.grupo_id = :grupo_id
-            ORDER BY u.nome ASC
-            LIMIT :limite OFFSET :offset
-            ";
+             FROM grupos_usuarios gu
+             INNER JOIN usuarios u ON u.id = gu.usuario_id
+             WHERE gu.grupo_id = :grupo_id
+             ORDER BY u.nome ASC
+             LIMIT :limite OFFSET :offset'
+        );
 
-        $stmt = $db->prepare($sql);
-        $stmt->bindValue(':grupo_id', $grupo_id, \PDO::PARAM_INT);
+        $stmt->bindValue(':grupo_id', $grupoId, \PDO::PARAM_INT);
         $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
 
         $stmt->execute();
+
         return $stmt->fetchAll();
     }
 
@@ -156,21 +176,20 @@ class GrupoUsuario
      * Conta quantos usuários existem em um grupo
      * Usado para paginação
      */
-    public static function contarPorGrupo(int $grupo_id): int
+    public static function contarPorGrupo(int $grupoId): int
     {
-        $db = \Core\Database::conectar();
+        $db = Database::conectar();
 
-        $stmt = $db->prepare("SELECT COUNT(*)
-                        FROM grupos_usuarios
-                        WHERE grupo_id = :grupo_id
-                    ");
+        $stmt = $db->prepare(
+            'SELECT COUNT(*)
+             FROM grupos_usuarios
+             WHERE grupo_id = :grupo_id'
+        );
 
         $stmt->execute([
-            ':grupo_id' => $grupo_id
+            ':grupo_id' => $grupoId
         ]);
 
         return (int) $stmt->fetchColumn();
     }
-
-
 }
