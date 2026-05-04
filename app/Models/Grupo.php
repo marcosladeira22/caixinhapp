@@ -90,4 +90,36 @@ class Grupo
 
         return $stmt->fetch() ?: null;
     }
+
+    /**
+     * Retorna status do grupo
+     */
+    public static function obterStatus(int $grupoId): ?string
+    {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'SELECT status FROM grupos WHERE id = :id'
+        );
+        $stmt->execute([':id' => $grupoId]);
+
+        return $stmt->fetchColumn() ?: null;
+    }
+
+    /**
+     * Fecha o grupo
+     */
+    public static function fechar(int $grupoId): void
+    {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'UPDATE grupos
+            SET status = "FECHADO",
+                fechado_em = NOW()
+            WHERE id = :id'
+        );
+        $stmt->execute([':id' => $grupoId]);
+    }
+
 }

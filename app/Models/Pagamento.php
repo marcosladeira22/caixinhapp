@@ -100,4 +100,21 @@ class Pagamento
 
         return (int) $stmt->fetchColumn();
     }
+
+    /**
+     * Soma total arrecadado de um grupo
+     */
+    public static function totalPagoPorGrupo(int $grupoId): float
+    {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'SELECT SUM(valor)
+            FROM pagamentos
+            WHERE grupo_id = :id'
+        );
+        $stmt->execute([':id' => $grupoId]);
+
+        return (float) $stmt->fetchColumn();
+    }
 }

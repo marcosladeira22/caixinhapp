@@ -192,4 +192,86 @@ class GrupoUsuario
 
         return (int) $stmt->fetchColumn();
     }
+
+    /**
+     * Retorna o score atual do usuário no grupo
+     */
+    public static function obterScore(int $usuarioId, int $grupoId): int
+    {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'SELECT score
+            FROM grupos_usuarios
+            WHERE usuario_id = :usuario_id
+            AND grupo_id = :grupo_id
+            LIMIT 1'
+        );
+
+        $stmt->execute([
+            ':usuario_id' => $usuarioId,
+            ':grupo_id'   => $grupoId
+        ]);
+
+        return (int) ($stmt->fetchColumn() ?? 0);
+    }
+
+    /**
+     * Atualiza o score do usuário no grupo
+     */
+    public static function atualizarScore(
+        int $usuarioId,
+        int $grupoId,
+        int $novoScore
+    ): void {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'UPDATE grupos_usuarios
+            SET score = :score
+            WHERE usuario_id = :usuario_id
+            AND grupo_id = :grupo_id'
+        );
+
+        $stmt->execute([
+            ':score'      => $novoScore,
+            ':usuario_id' => $usuarioId,
+            ':grupo_id'   => $grupoId
+        ]);
+    }
+
+    /**
+     * Lista usuários e cotas de um grupo
+     */
+    public static function listarCotasPorGrupo(int $grupoId): array
+    {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'SELECT usuario_id, quantidade_cotas
+            FROM grupos_usuarios
+            WHERE grupo_id = :id'
+        );
+        $stmt->execute([':id' => $grupoId]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Soma total de cotas do grupo
+     */
+    public static function totalCotas(int $grupoId): int
+    {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'SELECT SUM(quantidade_cotas)
+            FROM grupos_usuarios
+            WHERE grupo_id = :id'
+        );
+        $stmt->execute([':id' => $grupoId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
 }

@@ -1,78 +1,59 @@
 <?php
 namespace Services;
 
-use Core\Database;
+use Models\GrupoUsuario;
 
+/**
+ * Service responsável pela regra de cálculo e ajuste de score
+ */
 class ScoreService
 {
     /**
-     * Atualiza o score de um usuário em um grupo
-     * com base nos dias de atraso do pagamento
+     * Penaliza o score do usuário por inadimplência
      */
-    public static function atualizarScore(
-        int $usuario_id,
-        int $grupo_id,
-        int $dias_atraso
-    ): void
-    {
-        $db = Database::conectar();
+    public static function penalizar(
+        int $usuarioId,
+        int $grupoId,
+        int $diasAtraso
+    ): void {
+        $scoreAtual = GrupoUsuario::obterScore($usuarioId, $grupoId);
 
-        // Busca score atual
-        $sqlScore = "SELECT score 
-                     FROM grupos_usuarios
-                     WHERE usuario_id = :usuario_id
-                     AND grupo_id = :grupo_id";
+        $novoScore = self::calcularPenalidade($scoreAtual, $diasAtraso);
 
-        $stmt = $db->prepare($sqlScore);
-        $stmt->execute([
-            ':usuario_id' => $usuario_id,
-            ':grupo_id'   => $grupo_id
-        ]);
-
-        $scoreAtual = (int) $stmt->fetchColumn();
-
-        // Calcula novo score
-        $novoScore = self::calcularNovoScore($scoreAtual, $dias_atraso);
-
-        // Garante limites (não deixar negativo ou absurdo)
+        // Garante limites
         $novoScore = max(0, min(1000, $novoScore));
 
-        // Atualiza no banco
-        $sqlAtualizar = "UPDATE grupos_usuarios
-                         SET score = :score
-                         WHERE usuario_id = :usuario_id
-                         AND grupo_id = :grupo_id";
-
-        $stmt = $db->prepare($sqlAtualizar);
-        $stmt->execute([
-            ':score'      => $novoScore,
-            ':usuario_id' => $usuario_id,
-            ':grupo_id'   => $grupo_id
-        ]);
+        GrupoUsuario::atualizarScore($usuarioId, $grupoId, $novoScore);
     }
 
     /**
-     * Regra de cálculo do score
+     * Bonifica o score do usuário por bom comportamento (pagamento em dia)
      */
-    private static function calcularNovoScore(
+    public static function bonificar(
+        int $usuarioId,
+        int $grupoId
+    ): void {
+        $scoreAtual = GrupoUsuario::obterScore($usuarioId, $grupoId);
+
+        $novoScore = min(1000, $scoreAtual + 5);
+
+        GrupoUsuario::atualizarScore($usuarioId, $grupoId, $novoScore);
+    }
+
+    /**
+     * Regra de cálculo da penalidade por atraso
+     */
+    private static function calcularPenalidade(
         int $scoreAtual,
-        int $dias_atraso
-    ): int
-    {
-        // ✅ Pagamento em dia
-        if ($dias_atraso === 0) {
-            return $scoreAtual + 5;
+        int $diasAtraso
+    ): int {
+        $penalidade = $diasAtraso * 2;
+
+        // Penalidade adicional para atrasos longos
+        if ($diasAtraso > 10) {
+            $penalidade += 20;
         }
 
-        // ✅ Pagamento com atraso
-        $penalidade = $dias_atraso * 2;
-        $novoScore = $scoreAtual - $penalidade;
-
-        // Penalidade extra para atrasos longos
-        if ($dias_atraso > 10) {
-            $novoScore -= 20;
-        }
-
-        return $novoScore;
+        return $scoreAtual - $penalidade;
     }
 }

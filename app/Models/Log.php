@@ -67,4 +67,26 @@ class Log
 
         return (int) $stmt->fetchColumn();
     }
+
+    /**
+     * Registra um log no sistema
+     */
+    public static function registrar(
+        ?int $usuarioId,
+        string $acao,
+        string $descricao
+    ): void {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'INSERT INTO logs (usuario_id, acao, descricao)
+            VALUES (:usuario_id, :acao, :descricao)'
+        );
+
+        $stmt->execute([
+            ':usuario_id' => $usuarioId,
+            ':acao'       => $acao,
+            ':descricao'  => $descricao
+        ]);
+    }
 }

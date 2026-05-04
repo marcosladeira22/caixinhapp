@@ -1,50 +1,31 @@
 <?php
 namespace Services;
 
-use Core\Database;
+use Models\Pagamento;
+use Models\Emprestimo;
 
+/**
+ * Service responsável por gerar relatórios financeiros
+ * NÃO altera estado do sistema
+ */
 class RelatorioFinanceiroService
 {
     /**
      * Gera relatório financeiro consolidado de um grupo
      */
-    public static function gerar(int $grupo_id): array
+    public static function gerar(int $grupoId): array
     {
-        $db = Database::conectar();
+        $totalPagamentos = Pagamento::totalPagoPorGrupo($grupoId);
+        $totalEmprestado = Emprestimo::totalEmprestadoAtivo($grupoId);
+        $totalTaxas      = Emprestimo::totalTaxasEJuros($grupoId);
 
-        // ✅ Total arrecadado (pagamentos)
-        $totalPagamentos = $db->prepare("SELECT SUM(valor) 
-                                        FROM pagamentos 
-                                        WHERE grupo_id = :grupo_id"
-                                        );
-
-        $totalPagamentos->execute([':grupo_id' => $grupo_id]);
-
-        // ✅ Total emprestado
-        $totalEmprestado = $db->prepare("SELECT SUM(valor_solicitado) 
-                                        FROM emprestimos 
-                                        WHERE grupo_id = :grupo_id 
-                                        AND status IN ('APROVADO','PAGO','ATRASADO')
-                                        ");
-
-        $totalEmprestado->execute([':grupo_id' => $grupo_id]);
-
-        // ✅ Total de taxas e juros
-        $totalTaxas = $db->prepare("SELECT SUM(taxa_aplicada + juros_aplicados)
-                                    FROM emprestimos
-                                    WHERE grupo_id = :grupo_id
-                                    ");
-                                    
-        $totalTaxas->execute([':grupo_id' => $grupo_id]);
+        $saldoAtual = $totalPagamentos - $totalEmprestado + $totalTaxas;
 
         return [
-            'total_pagamentos' => (float) $totalPagamentos->fetchColumn(),
-            'total_emprestado' => (float) $totalEmprestado->fetchColumn(),
-            'total_taxas'      => (float) $totalTaxas->fetchColumn(),
-            'saldo_atual'      => 
-                (float)$totalPagamentos->fetchColumn() 
-                - (float)$totalEmprestado->fetchColumn()
-                + (float)$totalTaxas->fetchColumn(),
+            'total_pagamentos' => $totalPagamentos,
+            'total_emprestado' => $totalEmprestado,
+            'total_taxas'      => $totalTaxas,
+            'saldo_atual'      => $saldoAtual,
         ];
     }
 }

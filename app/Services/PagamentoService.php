@@ -6,52 +6,78 @@ use Services\LogService;
 use Core\Sessao;
 
 /**
- * Regras de negócio relacionadas a pagamentos de cotas
+ * Service responsável pelas regras de negócio de pagamentos de cotas
  */
 class PagamentoService
 {
     /**
-     * Verifica se o usuário está em dia com a cota no mês atual
+     * Verifica se o usuário está em dia com a cota
      */
-    public static function usuarioEstaEmDia(int $usuario_id, int $grupo_id): bool
-    {
-        $mesAtual = date('Y-m-01');
+    public static function usuarioEstaEmDia(
+        int $usuarioId,
+        int $grupoId
+    ): bool {
+        $mesReferencia = date('Y-m-01');
 
-        $pagamentos = Pagamento::listarPorGrupoMes($grupo_id, $mesAtual);
-
-        foreach ($pagamentos as $p) {
-            if ($p['usuario_id'] == $usuario_id) {
-                return !empty($p['pagamento_id']);
-            }
-        }
-
-        return false;
+        return self::existePagamentoNoMes(
+            $usuarioId,
+            $grupoId,
+            $mesReferencia
+        );
     }
 
     /**
-     * Regras de registro de pagamento de cotas
+     * Registra o pagamento da cota
      */
     public static function registrarPagamento(
-        int $usuario_id,
-        int $grupo_id,
-        int $quantidade_cotas,
-        float $valor_cota
+        int $usuarioId,
+        int $grupoId,
+        int $quantidadeCotas,
+        float $valorCota
     ): void {
-        $mesAtual = date('Y-m-01');
+        $mesReferencia = date('Y-m-01');
+        $valorTotal    = $quantidadeCotas * $valorCota;
 
-        // Valor total = cotas × valor da cota
-        $valorTotal = $quantidade_cotas * $valor_cota;
+        Pagamento::registrar(
+            $usuarioId,
+            $grupoId,
+            $mesReferencia,
+            $valorTotal,
+            date('Y-m-d'),
+            0
+        );
 
-        \Models\Pagamento::registrar([
-            ':usuario_id'     => $usuario_id,
-            ':grupo_id'       => $grupo_id,
-            ':mes_referencia' => $mesAtual,
-            ':valor'          => $valorTotal,
-            ':data_pagamento' => date('Y-m-d'),
-            ':dias_atraso'    => 0
+        LogService::registrar(
+            Sessao::get('usuario_id'),
+            'PAGAMENTO',
+            "Pagamento registrado para usuário {$usuarioId} no grupo {$grupoId}"
+        );
+    }
+
+    /**
+     * Verifica se existe pagamento registrado para o mês
+     */
+    private static function existePagamentoNoMes(
+        int $usuarioId,
+        int $grupoId,
+        string $mesReferencia
+    ): bool {
+        $db = \Core\Database::conectar();
+
+        $stmt = $db->prepare(
+            'SELECT COUNT(*)
+            FROM pagamentos
+            WHERE usuario_id = :usuario_id
+            AND grupo_id = :grupo_id
+            AND mes_referencia = :mes'
+        );
+
+        $stmt->execute([
+            ':usuario_id' => $usuarioId,
+            ':grupo_id'   => $grupoId,
+            ':mes'        => $mesReferencia
         ]);
 
-        // ✅ Registra log
-        LogService::registrar(Sessao::get('usuario_id'),'PAGAMENTO',"Pagamento registrado para usuário {$usuario_id} no grupo {$grupo_id}");
+        return (int)$stmt->fetchColumn() > 0;
     }
 }

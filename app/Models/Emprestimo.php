@@ -198,4 +198,57 @@ class Emprestimo
 
         return (int) $stmt->fetchColumn();
     }
+
+    /**
+     * Lista empréstimos aprovados e vencidos
+     */
+    public static function listarAprovadosVencidos(): array
+    {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'SELECT *
+            FROM emprestimos
+            WHERE status = "APROVADO"
+            AND data_vencimento < CURDATE()'
+        );
+
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Soma total emprestado ainda em aberto
+     */
+    public static function totalEmprestadoAtivo(int $grupoId): float
+    {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'SELECT SUM(valor_solicitado)
+            FROM emprestimos
+            WHERE grupo_id = :id
+            AND status IN ("APROVADO","ATRASADO")'
+        );
+        $stmt->execute([':id' => $grupoId]);
+
+        return (float) $stmt->fetchColumn();
+    }
+
+    /**
+     * Soma total de taxas e juros aplicados
+     */
+    public static function totalTaxasEJuros(int $grupoId): float
+    {
+        $db = Database::conectar();
+
+        $stmt = $db->prepare(
+            'SELECT SUM(taxa_aplicada + juros_aplicados)
+            FROM emprestimos
+            WHERE grupo_id = :id'
+        );
+        $stmt->execute([':id' => $grupoId]);
+
+        return (float) $stmt->fetchColumn();
+    }
 }

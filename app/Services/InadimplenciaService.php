@@ -1,29 +1,29 @@
 <?php
 namespace Services;
 
-use Core\Database;
-use Models\Grupo;
 use Models\Emprestimo;
-use Models\GrupoUsuario;
+use Models\Grupo;
+use Services\ScoreService;
 use DateTime;
 
+/**
+ * Service responsável por processar inadimplência de empréstimos
+ *
+ * IMPORTANTE:
+ * Este service NÃO deve ser executado automaticamente em toda requisição.
+ * Ele deve ser chamado:
+ * - via cron
+ * - via endpoint administrativo
+ * - ou em ponto explícito do domínio
+ */
 class InadimplenciaService
 {
     /**
-     * Processa inadimplência de todos os empréstimos vencidos
-     * Esse método pode ser chamado sempre que o usuário acessa o sistema
+     * Processa todos os empréstimos vencidos e aprovados
      */
     public static function processar(): void
     {
-        $db = Database::conectar();
-
-        // Busca empréstimos vencidos e ainda não pagos
-        $sql = "SELECT * FROM emprestimos
-                WHERE status = 'APROVADO'
-                AND data_vencimento < CURDATE()";
-
-        $stmt        = $db->query($sql);
-        $emprestimos = $stmt->fetchAll();
+        $emprestimos = Emprestimo::listarAprovadosVencidos();
 
         foreach ($emprestimos as $emprestimo) {
             self::processarEmprestimo($emprestimo);
@@ -31,74 +31,57 @@ class InadimplenciaService
     }
 
     /**
-     * Processa um empréstimo individualmente
+     * Processa inadimplência de um empréstimo específico
      */
     private static function processarEmprestimo(array $emprestimo): void
     {
+        $dataVencimento = new DateTime($emprestimo['data_vencimento']);
         $hoje = new DateTime();
-        $vencimento = new DateTime($emprestimo['data_vencimento']);
 
-        // Dias em atraso
-        $diasAtraso = $vencimento->diff($hoje)->days;
+        $diasAtraso = $dataVencimento->diff($hoje)->days;
 
         if ($diasAtraso <= 0) {
             return;
         }
 
-        // Busca regras do grupo
-        $grupo = Grupo::buscarPorId($emprestimo['grupo_id']);
+        $grupo = Grupo::buscarPorId((int)$emprestimo['grupo_id']);
+        if (!$grupo) {
+            return;
+        }
 
-        // Calcula juros por atraso
-        $juros = self::calcularJuros($emprestimo['valor_total'], $grupo, $diasAtraso);
+        $juros = self::calcularJuros(
+            (float)$emprestimo['valor_total'],
+            $grupo,
+            $diasAtraso
+        );
 
-        // Atualiza empréstimo
-        Emprestimo::atualizarAtraso($emprestimo['id'], $juros);
+        // Atualiza status do empréstimo
+        Emprestimo::marcarComoAtrasado(
+            (int)$emprestimo['id'],
+            $juros
+        );
 
-        // Penaliza score
-        self::penalizarScore($emprestimo['usuario_id'], $emprestimo['grupo_id'], $diasAtraso);
+        // Penaliza score via serviço dedicado
+        ScoreService::penalizar(
+            (int)$emprestimo['usuario_id'],
+            (int)$emprestimo['grupo_id'],
+            $diasAtraso
+        );
     }
 
     /**
      * Calcula juros por atraso
      */
     private static function calcularJuros(
-        float $valor,
+        float $valorTotal,
         array $grupo,
         int $diasAtraso
-    ): float
-    {
+    ): float {
         if ($grupo['juros_tipo'] === 'fixo') {
             return $grupo['juros_valor'] * $diasAtraso;
         }
 
         // Percentual ao dia
-        return ($valor * $grupo['juros_valor'] / 100) * $diasAtraso;
-    }
-
-    /**
-     * Penaliza o score do usuário inadimplente
-     */
-    private static function penalizarScore(
-        int $usuario_id,
-        int $grupo_id,
-        int $diasAtraso
-    ): void
-    {
-        $db = Database::conectar();
-
-        // Penalidade progressiva
-        $penalidade = min(30, $diasAtraso * 2);
-
-        $sql = "UPDATE grupos_usuarios
-                SET score = GREATEST(score - :penalidade, 0)
-                WHERE usuario_id = :usuario_id
-                AND grupo_id = :grupo_id";
-
-        $stmt = $db->prepare($sql);
-        $stmt->execute([
-            ':penalidade' => $penalidade,
-            ':usuario_id' => $usuario_id,
-            ':grupo_id'   => $grupo_id
-        ]);
+        return ($valorTotal * ($grupo['juros_valor'] / 100)) * $diasAtraso;
     }
 }

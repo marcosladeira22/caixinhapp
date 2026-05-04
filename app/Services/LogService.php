@@ -1,32 +1,25 @@
 <?php
 namespace Services;
 
-use Core\Database;
+use Models\Log;
 
 /**
- * Serviço responsável por registrar logs de auditoria
+ * Service responsável por orquestrar logs de auditoria
  */
 class LogService
 {
     /**
      * Registra uma ação no sistema
      *
-     * @param int|null $usuario_id Usuário que executou a ação
-     * @param string   $acao       Tipo da ação (ex: PAGAMENTO, EMPRESTIMO)
-     * @param string   $descricao  Descrição detalhada
+     * @param int|null $usuarioId Usuário que executou a ação
+     * @param string   $acao      Tipo da ação (ex: PAGAMENTO, EMPRESTIMO)
+     * @param string   $descricao Descrição detalhada
      */
-    public static function registrar(?int $usuario_id, string $acao, string $descricao): void
-    {
-        $db = Database::conectar();
-
-        $sql = "INSERT INTO logs (usuario_id, acao, descricao)
-                VALUES (:usuario_id, :acao, :descricao)";
-
-        $stmt = $db->prepare($sql);
-        $stmt->execute([
-            ':usuario_id' => $usuario_id,
-            ':acao'       => $acao,
-            ':descricao'  => $descricao
-        ]);
+    public static function registrar(
+        ?int $usuarioId,
+        string $acao,
+        string $descricao
+    ): void {
+        Log::registrar($usuarioId, $acao, $descricao);
     }
 }
