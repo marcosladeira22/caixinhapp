@@ -4,98 +4,69 @@ namespace Controllers;
 use Core\Controller;
 use Core\Autenticacao;
 use Core\Sessao;
-use Models\Grupo;
-use Models\GrupoUsuario;
+use Services\DashboardService;
+use Exception;
 
+/**
+ * Controller responsável pelo fluxo de dashboard
+ */
 class DashboardController extends Controller
 {
     /**
-     * Fluxo inicial após o login
-     * Decide:
-     * - se cria grupo
-     * - se entra direto
-     * - se escolhe grupo
+     * Fluxo inicial após login
      */
     public function index()
     {
-        Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $usuario_id = Sessao::get('usuario_id');
+        $usuarioId = Sessao::get('usuario_id');
+        $grupos = DashboardService::gruposDoUsuario($usuarioId);
 
-        // Busca os grupos do usuário
-        $grupos = Grupo::listarPorUsuario($usuario_id);
-
-        // Usuário não possui grupo → cria o primeiro
+        // Nenhum grupo → criar primeiro
         if (empty($grupos)) {
-            header('Location: ' . base_url('?rota=grupo@criar'));
-            exit;
+            $this->redirect('?rota=grupo@criar');
         }
 
-        // Usuário possui apenas um grupo → entra direto
+        // Apenas um grupo → entra direto
         if (count($grupos) === 1) {
-            $grupo_id = $grupos[0]['id'];
-            header('Location: ' . base_url("?rota=dashboard@grupo&grupo_id={$grupo_id}"));
-            exit;
+            $grupoId = $grupos[0]['id'];
+            $this->redirect("?rota=dashboard@grupo&grupo_id={$grupoId}");
         }
 
-        // Usuário possui vários grupos → escolhe qual acessar
-        $this->view('dashboard/selecionar_grupo', compact('grupos'));
+        // Vários grupos → escolhe
+        $this->view('dashboard/selecionar_grupo', [
+            'grupos' => $grupos
+        ]);
     }
 
     /**
      * Dashboard de um grupo específico
-     * AQUI está a principal mudança
      */
     public function grupo()
     {
-        Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $grupo_id = $_GET['grupo_id'] ?? null;
-        if (!$grupo_id) {
-            die('Grupo não informado.');
+        $grupoId = $_GET['grupo_id'] ?? null;
+        if (!$grupoId) {
+            $this->redirect('?rota=dashboard@index');
         }
 
-        $usuario_id = Sessao::get('usuario_id');
+        $usuarioId = Sessao::get('usuario_id');
 
-        // Verifica nível do usuário dentro do grupo
-        $nivel = GrupoUsuario::nivelUsuarioNoGrupo($usuario_id, $grupo_id);
+        try {
+            $dados = DashboardService::dadosDoGrupo(
+                $usuarioId,
+                (int)$grupoId
+            );
 
-        if (!$nivel) {
-            die('Usuário não pertence a este grupo.');
+            $this->view('dashboard/index', [
+                'dados' => $dados
+            ]);
+
+        } catch (Exception $e) {
+            $this->view('dashboard/index', [
+                'erro' => $e->getMessage()
+            ]);
         }
-
-        /**
-         * 🔥 NOVO CONCEITO
-         * Preparamos UM array de dados
-         * O que muda é o CONTEÚDO, não a view
-         */
-
-        if ($nivel === 'ADMIN') {
-
-            // Admin vê dados do GRUPO
-            $dados = [
-                'tipo'     => 'ADMIN',
-                'grupo_id' => $grupo_id
-                // futuramente:
-                // total_caixa, inadimplentes, etc
-            ];
-
-        } else {
-
-            // Membro vê apenas informações DELE
-            $grupoUsuario = GrupoUsuario::buscar($usuario_id, $grupo_id);
-
-            $dados = [
-                'tipo'             => 'MEMBRO',
-                'grupo_id'         => $grupo_id,
-                'score'            => $grupoUsuario['score'],
-                'quantidade_cotas' => $grupoUsuario['quantidade_cotas']
-            ];
-        }
-
-        // ✅ UMA ÚNICA VIEW PARA OS DOIS PERFIS
-        $this->view('dashboard/index', [
-            'dados' => $dados
-        ]);
     }
 }

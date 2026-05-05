@@ -5,93 +5,101 @@ use Core\Controller;
 use Core\Autenticacao;
 use Core\Sessao;
 use Services\EmprestimoService;
+use Services\EmprestimoConsultaService;
 use Exception;
 
+/**
+ * Controller responsável pelas ações de empréstimo
+ */
 class EmprestimoController extends Controller
 {
-
     /**
-     * 
+     * Lista empréstimos do grupo
      */
     public function index()
     {
-        \Core\Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $grupo_id = $_GET['grupo_id'] ?? null;
-        if (!$grupo_id) {
-            die('Grupo não informado.');
+        $grupoId = $_GET['grupo_id'] ?? null;
+        if (!$grupoId) {
+            $this->redirect('?rota=dashboard@index');
         }
 
-        // Paginação
-        $paginaAtual = (int)($_GET['page'] ?? 1);
-        $porPagina   = (int)($_GET['per_page'] ?? 10);
+        $pagina = (int)($_GET['page'] ?? 1);
+        $porPagina = (int)($_GET['per_page'] ?? 10);
 
-        // Total
-        $total = \Models\Emprestimo::contarPorGrupo($grupo_id);
-
-        $paginator = new \Core\Paginator(
-            $total,
-            $paginaAtual,
+        $resultado = EmprestimoConsultaService::listarPorGrupo(
+            (int)$grupoId,
+            $pagina,
             $porPagina
         );
 
-        $emprestimos = \Models\Emprestimo::listarPorGrupoPaginado(
-            $grupo_id,
-            $paginator->porPagina,
-            $paginator->offset
-        );
-
         $this->view('emprestimos/index', [
-            'emprestimos' => $emprestimos,
-            'grupo_id'    => $grupo_id,
-            'paginator'   => $paginator
+            'emprestimos' => $resultado['emprestimos'],
+            'paginator'   => $resultado['paginator'],
+            'grupo_id'    => $grupoId
         ]);
     }
 
     /**
-     * Solicitação de empréstimo (membro ou admin)
+     * Solicitação de empréstimo
      */
     public function solicitar()
     {
-        Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $grupo_id   = $_GET['grupo_id'] ?? null;
-        $usuario_id = Sessao::get('usuario_id');
+        $grupoId   = $_GET['grupo_id'] ?? null;
+        $usuarioId = Sessao::get('usuario_id');
 
-        if (!$grupo_id) {
-            die('Grupo não informado.');
+        if (!$grupoId) {
+            $this->redirect('?rota=dashboard@index');
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-            $valor = (float) $_POST['valor'];
-
             try {
-                EmprestimoService::solicitar($usuario_id, $grupo_id, $valor);
+                EmprestimoService::solicitar(
+                    $usuarioId,
+                    (int)$grupoId,
+                    (float)$_POST['valor']
+                );
 
-                header('Location: ' . base_url("?rota=dashboard@grupo&grupo_id={$grupo_id}"));
-                exit;
+                $this->redirect("?rota=dashboard@grupo&grupo_id={$grupoId}");
 
             } catch (Exception $e) {
-                $erro = $e->getMessage();
+                $this->view('emprestimos/solicitar', [
+                    'grupo_id' => $grupoId,
+                    'erro'     => $e->getMessage()
+                ]);
             }
+
+            return;
         }
 
-        $this->view('emprestimos/solicitar', compact('grupo_id', 'erro'));
+        $this->view('emprestimos/solicitar', [
+            'grupo_id' => $grupoId
+        ]);
     }
 
     /**
-     * 
+     * Lista inadimplentes do grupo
      */
     public function inadimplentes()
     {
-        \Core\Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $grupo_id = $_GET['grupo_id'] ?? null;
-        if (!$grupo_id) die('Grupo não informado');
+        $grupoId = $_GET['grupo_id'] ?? null;
+        if (!$grupoId) {
+            $this->redirect('?rota=dashboard@index');
+        }
 
-        $lista = \Models\Emprestimo::listarPorStatus($grupo_id, 'ATRASADO');
+        $lista = EmprestimoConsultaService::listarInadimplentes(
+            (int)$grupoId
+        );
 
-        $this->view('emprestimos/inadimplentes', compact('lista', 'grupo_id'));
+        $this->view('emprestimos/inadimplentes', [
+            'lista'    => $lista,
+            'grupo_id' => $grupoId
+        ]);
     }
 }

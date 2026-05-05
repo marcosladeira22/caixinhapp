@@ -3,185 +3,82 @@ namespace Controllers;
 
 use Core\Controller;
 use Core\Autenticacao;
-use Core\Sessao;
-use Core\Paginator;
 use Core\Permissao;
-use Models\Pagamento;
+use Core\Sessao;
+use Services\PagamentoService;
+use Services\PagamentoConsultaService;
 use Models\GrupoUsuario;
 use Models\Grupo;
-use Services\ScoreService;
+use Exception;
 
-
-
+/**
+ * Controller responsável por pagamentos de cotas
+ */
 class PagamentoController extends Controller
 {
-
-    
     /**
-     * Lista pagamentos de cotas do grupo (com paginação)
-     * Apenas ADMIN pode acessar
+     * Lista pagamentos do grupo (ADMIN)
      */
     public function index()
     {
-        // 🔒 Verifica se o usuário está autenticado
-        \Core\Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        // ✅ Grupo obrigatório
-        $grupo_id = $_GET['grupo_id'] ?? null;
-        if (!$grupo_id) {
-            die('Grupo não informado.');
+        $grupoId = $_GET['grupo_id'] ?? null;
+        if (!$grupoId) {
+            $this->redirect('?rota=dashboard@index');
         }
 
-        // 🔒 Somente ADMIN do grupo
-        \Core\Permissao::admin($grupo_id);
+        Permissao::exigirAdmin((int)$grupoId);
 
-        // ✅ Mês de referência da cota (sempre o mês atual)
-        $mesAtual = date('Y-m-01');
+        $pagina    = (int)($_GET['page'] ?? 1);
+        $porPagina = (int)($_GET['per_page'] ?? 10);
 
-        // ✅ Parâmetros de paginação vindos da URL
-        $paginaAtual = (int)($_GET['page'] ?? 1);
-        $porPagina   = (int)($_GET['per_page'] ?? 10);
-
-        // ✅ Total de registros (para calcular páginas reais)
-        $totalRegistros = \Models\Pagamento::contarPorGrupoMes(
-            $grupo_id,
-            $mesAtual
-        );
-
-        // ✅ Cria o paginator (objeto central da paginação)
-        $paginator = new \Core\Paginator(
-            $totalRegistros,
-            $paginaAtual,
+        $resultado = PagamentoConsultaService::listarPorGrupoMesAtual(
+            (int)$grupoId,
+            $pagina,
             $porPagina
         );
 
-        // ✅ Busca os pagamentos já paginados
-        $pagamentos = \Models\Pagamento::listarPorGrupoMesPaginado(
-            $grupo_id,
-            $mesAtual,
-            $paginator->porPagina,
-            $paginator->offset
-        );
-
-        // ✅ Envia tudo para a view (NADA solto)
         $this->view('pagamentos/index', [
-            'grupo_id'   => $grupo_id,
-            'mes'        => $mesAtual,
-            'pagamentos' => $pagamentos,
-            'paginator'  => $paginator
-        ]);
-    }
-
-
-    /**
-    * Tela e ação de lançamento de pagamento
-    */
-    public function criar()
-    {
-        // 🔒 Usuário precisa estar logado
-        Autenticacao::verificar();
-
-        $grupo_id             = $_GET['grupo_id'] ?? null;
-        $usuario_id_pagamento = $_GET['usuario_id'] ?? null;
-
-        if (!$grupo_id || !$usuario_id_pagamento) {
-            die('Grupo ou usuário não informado.');
-        }
-
-        // 🔒 Somente ADMIN pode lançar pagamento para terceiros
-        Permissao::admin($grupo_id);
-
-        // Busca dados do usuário no grupo
-        // (quantidade de cotas influencia o valor)
-        $grupoUsuario = GrupoUsuario::buscar($usuario_id_pagamento, $grupo_id);
-
-        if (!$grupoUsuario) {
-            die('Usuário não pertence ao grupo.');
-        }
-
-        // Simples: vencimento todo dia 10
-        $dia_vencimento = '10';
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-            $mes_referencia = $_POST['mes_referencia'];
-            $data_pagamento = $_POST['data_pagamento'];
-
-            // Valor = valor da cota * quantidade de cotas
-            $valor = $_POST['valor'];
-
-            // Calcula atraso
-            $vencimento  = date('Y-m-' . $dia_vencimento, strtotime($mes_referencia));
-            $dias_atraso = Pagamento::calcularAtraso($vencimento, $data_pagamento);
-
-            Pagamento::registrar([
-                ':usuario_id'     => $usuario_id_pagamento,
-                ':grupo_id'       => $grupo_id,
-                ':mes_referencia' => $mes_referencia,
-                ':valor'          => $valor,
-                ':data_pagamento' => $data_pagamento,
-                ':dias_atraso'    => $dias_atraso
-            ]);
-
-            // ✅ Atualiza score automaticamente
-            ScoreService::atualizarScore(
-                $usuario_id_pagamento,
-                $grupo_id,
-                $dias_atraso
-            );
-
-
-            header("Location: " . base_url("?rota=dashboard@index&grupo_id={$grupo_id}"));
-            exit;
-        }
-
-        $this->view('pagamentos/criar', [
-            'grupo_id'         => $grupo_id,
-            'usuario_id'       => $usuario_id_pagamento,
-            'quantidade_cotas' => $grupoUsuario['quantidade_cotas']
+            'grupo_id'   => $grupoId,
+            'mes'        => $resultado['mes'],
+            'pagamentos' => $resultado['pagamentos'],
+            'paginator'  => $resultado['paginator']
         ]);
     }
 
     /**
-    * Tela e ação de lançamento de pagamento
-    */
+     * Registra pagamento (ADMIN)
+     */
     public function pagar()
     {
-        \Core\Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        // Apenas ADMIN pode registrar pagamento
-        $grupo_id   = $_POST['grupo_id'] ?? null;
-        $usuario_id = $_POST['usuario_id'] ?? null;
+        $grupoId   = $_POST['grupo_id']   ?? null;
+        $usuarioId = $_POST['usuario_id'] ?? null;
 
-        if (!$grupo_id || !$usuario_id) {
-            die('Dados inválidos.');
+        if (!$grupoId || !$usuarioId) {
+            $this->redirect('?rota=dashboard@index');
         }
 
-        \Core\Permissao::admin($grupo_id);
+        Permissao::exigirAdmin((int)$grupoId);
 
-        // Busca dados do usuário no grupo
-
-        $grupoUsuario = \Models\GrupoUsuario::buscar($usuario_id, $grupo_id);
-
+        // Recupera dados necessários (apenas leitura)
+        $grupoUsuario = GrupoUsuario::buscarPorUsuarioEGrupo((int)$usuarioId, (int)$grupoId);
         if (!$grupoUsuario) {
-            die('Usuário não pertence ao grupo.');
+            $this->redirect('?rota=dashboard@index');
         }
 
-        // Busca valor da cota no grupo
-        $grupo = \Models\Grupo::buscarPorId($grupo_id);
+        $grupo = Grupo::buscarPorId((int)$grupoId);
 
-        // ✅ Chama a regra
-        \Services\PagamentoService::registrarPagamento(
-            $usuario_id,
-            $grupo_id,
-            $grupoUsuario['quantidade_cotas'],
-            $grupo['valor_cota']
+        // ✅ Delegação TOTAL ao Service
+        PagamentoService::registrarPagamento(
+            (int)$usuarioId,
+            (int)$grupoId,
+            (int)$grupoUsuario['quantidade_cotas'],
+            (float)$grupo['valor_cota']
         );
 
-        // Volta para a lista de pagamentos
-        header('Location: ' . base_url("?rota=pagamento@index&grupo_id={$grupo_id}"));
-        exit;
+        $this->redirect("?rota=pagamento@index&grupo_id={$grupoId}");
     }
-
-    
 }

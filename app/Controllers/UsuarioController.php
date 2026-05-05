@@ -4,28 +4,35 @@ namespace Controllers;
 use Core\Controller;
 use Core\Autenticacao;
 use Core\Sessao;
-use Models\Usuario;
-use Services\LogService;
+use Services\UsuarioService;
+use Exception;
 
+/**
+ * Controller responsável pelo perfil do usuário
+ */
 class UsuarioController extends Controller
 {
     /**
-     * Exibe o perfil do usuário logado
+     * Exibe perfil do usuário logado
      */
     public function perfil()
     {
-        Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $usuario_id = Sessao::get('usuario_id');
+        try {
+            $usuario = UsuarioService::obterPerfil(
+                Sessao::get('usuario_id')
+            );
 
-        $usuario = Usuario::buscarPorId($usuario_id);
-        if (!$usuario) {
-            die('Usuário não encontrado.');
+            $this->view('usuario/perfil', [
+                'usuario' => $usuario
+            ]);
+
+        } catch (Exception $e) {
+            $this->view('usuario/perfil', [
+                'erro' => $e->getMessage()
+            ]);
         }
-
-        $this->view('usuario/perfil', [
-            'usuario' => $usuario
-        ]);
     }
 
     /**
@@ -33,38 +40,23 @@ class UsuarioController extends Controller
      */
     public function atualizar()
     {
-        Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $usuario_id = Sessao::get('usuario_id');
+        try {
+            UsuarioService::atualizarPerfil(
+                Sessao::get('usuario_id'),
+                trim($_POST['nome']),
+                trim($_POST['telefone']) ?: null,
+                $_POST['sexo'],
+                $_POST['senha'] ?? null
+            );
 
-        $nome     = trim($_POST['nome']);
-        $telefone = trim($_POST['telefone']);
-        $sexo     = $_POST['sexo'];
-        $senha    = $_POST['senha'] ?? null;
+            $this->redirect('?rota=usuario@perfil');
 
-        if (!$nome || !$sexo) {
-            die('Dados inválidos.');
+        } catch (Exception $e) {
+            $this->view('usuario/perfil', [
+                'erro' => $e->getMessage()
+            ]);
         }
-
-        Usuario::atualizarDadosBasicos(
-            $usuario_id,
-            $nome,
-            $telefone ?: null,
-            $sexo
-        );
-
-        // Atualiza senha apenas se foi informada
-        if (!empty($senha)) {
-            Usuario::atualizarSenha($usuario_id, $senha);
-        }
-
-        LogService::registrar(
-            $usuario_id,
-            'PERFIL',
-            'Usuário atualizou seus dados de perfil'
-        );
-
-        header('Location: ' . base_url('?rota=usuario@perfil'));
-        exit;
     }
 }

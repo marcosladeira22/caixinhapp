@@ -4,7 +4,7 @@ namespace Controllers;
 use Core\Controller;
 use Core\Autenticacao;
 use Core\Permissao;
-use Models\Log;
+use Services\LogConsultaService;
 
 /**
  * Controller responsável pela visualização dos logs
@@ -13,37 +13,28 @@ class LogController extends Controller
 {
     public function index()
     {
-        \Core\Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $grupo_id = $_GET['grupo_id'] ?? null;
-        if (!$grupo_id) {
-            die('Grupo não informado.');
+        $grupoId = $_GET['grupo_id'] ?? null;
+        if (!$grupoId) {
+            $this->redirect('?rota=dashboard@index');
         }
 
-        \Core\Permissao::admin($grupo_id);
+        Permissao::exigirAdmin((int)$grupoId);
 
-        // Paginação
-        $paginaAtual = (int)($_GET['page'] ?? 1);
-        $porPagina   = (int)($_GET['per_page'] ?? 10);
+        $pagina    = (int)($_GET['page'] ?? 1);
+        $porPagina = (int)($_GET['per_page'] ?? 10);
 
-        // Total de registros
-        $total = \Models\Log::contarPorGrupo($grupo_id);
-
-        // Paginator
-        $paginator = new \Core\Paginator($total, $paginaAtual, $porPagina);
-
-        // Logs paginados
-        $logs = \Models\Log::listarPorGrupoPaginado(
-            $grupo_id,
-            $paginator->porPagina,
-            $paginator->offset
+        $resultado = LogConsultaService::listarPorGrupo(
+            (int)$grupoId,
+            $pagina,
+            $porPagina
         );
 
         $this->view('logs/index', [
-            'logs'      => $logs,
-            'grupo_id'  => $grupo_id,
-            'paginator' => $paginator,
-            'acao'      => $acao ?? null
+            'logs'      => $resultado['logs'],
+            'paginator' => $resultado['paginator'],
+            'grupo_id'  => $grupoId
         ]);
     }
 }

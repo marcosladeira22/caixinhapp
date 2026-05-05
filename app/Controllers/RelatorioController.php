@@ -6,6 +6,9 @@ use Core\Autenticacao;
 use Core\Permissao;
 use Services\RelatorioFinanceiroService;
 
+/**
+ * Controller responsável pelos relatórios do sistema
+ */
 class RelatorioController extends Controller
 {
     /**
@@ -13,20 +16,19 @@ class RelatorioController extends Controller
      */
     public function financeiro()
     {
-        Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $grupo_id = $_GET['grupo_id'] ?? null;
-        if (!$grupo_id) {
-            die('Grupo não informado.');
+        $grupoId = $_GET['grupo_id'] ?? null;
+        if (!$grupoId) {
+            $this->redirect('?rota=dashboard@index');
         }
 
-        // 🔒 Apenas ADMIN
-        Permissao::admin($grupo_id);
+        Permissao::exigirAdmin((int)$grupoId);
 
-        $dados = RelatorioFinanceiroService::gerar($grupo_id);
+        $dados = RelatorioFinanceiroService::gerar((int)$grupoId);
 
         $this->view('relatorios/financeiro', [
-            'grupo_id' => $grupo_id,
+            'grupo_id' => $grupoId,
             'dados'    => $dados
         ]);
     }

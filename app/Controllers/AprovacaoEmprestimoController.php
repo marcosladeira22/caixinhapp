@@ -5,64 +5,80 @@ use Core\Controller;
 use Core\Autenticacao;
 use Core\Permissao;
 use Services\AprovacaoEmprestimoService;
-use Models\Emprestimo;
+use Services\AprovacaoEmprestimoConsultaService;
 
+/**
+ * Controller responsável pela aprovação de empréstimos
+ */
 class AprovacaoEmprestimoController extends Controller
 {
     /**
-     * Lista empréstimos pendentes do grupo
+     * Lista empréstimos pendentes do grupo (ADMIN)
      */
     public function index()
     {
-        Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $grupo_id = $_GET['grupo_id'] ?? null;
-
-        if (!$grupo_id) {
-            die('Grupo não informado.');
+        $grupoId = $_GET['grupo_id'] ?? null;
+        if (!$grupoId) {
+            $this->redirect('?rota=dashboard@index');
         }
 
-        // 🔒 Apenas ADMIN
-        Permissao::admin($grupo_id);
+        Permissao::exigirAdmin((int)$grupoId);
 
-        $emprestimos = Emprestimo::listarPendentesPorGrupo($grupo_id);
+        $emprestimos = AprovacaoEmprestimoConsultaService::listarPendentes(
+            (int)$grupoId
+        );
 
-        $this->view('emprestimos/aprovacao', compact('emprestimos', 'grupo_id'));
+        $this->view('emprestimos/aprovacao', [
+            'emprestimos' => $emprestimos,
+            'grupo_id'    => $grupoId
+        ]);
     }
 
     /**
-     * Aprovar empréstimo
+     * Aprova empréstimo
      */
     public function aprovar()
     {
-        Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $emprestimo_id = $_POST['emprestimo_id'];
-        $grupo_id      = $_POST['grupo_id'];
+        $emprestimoId = $_POST['emprestimo_id'] ?? null;
+        $grupoId      = $_POST['grupo_id'] ?? null;
 
-        Permissao::admin($grupo_id);
+        if (!$emprestimoId || !$grupoId) {
+            $this->redirect('?rota=dashboard@index');
+        }
 
-        AprovacaoEmprestimoService::aprovar($emprestimo_id);
+        Permissao::exigirAdmin((int)$grupoId);
 
-        header('Location: ' . base_url("?rota=aprovacaoEmprestimo@index&grupo_id={$grupo_id}"));
-        exit;
+        AprovacaoEmprestimoService::aprovar((int)$emprestimoId);
+
+        $this->redirect("?rota=aprovacaoEmprestimo@index&grupo_id={$grupoId}");
     }
 
     /**
-     * Rejeitar empréstimo
+     * Rejeita empréstimo
      */
     public function rejeitar()
     {
-        Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $emprestimo_id = $_POST['emprestimo_id'];
-        $grupo_id      = $_POST['grupo_id'];
+        $emprestimoId = $_POST['emprestimo_id'] ?? null;
+        $grupoId      = $_POST['grupo_id'] ?? null;
+        $motivo       = $_POST['motivo'] ?? null;
 
-        Permissao::admin($grupo_id);
+        if (!$emprestimoId || !$grupoId) {
+            $this->redirect('?rota=dashboard@index');
+        }
 
-        AprovacaoEmprestimoService::rejeitar($emprestimo_id);
+        Permissao::exigirAdmin((int)$grupoId);
 
-        header('Location: ' . base_url("?rota=aprovacaoEmprestimo@index&grupo_id={$grupo_id}"));
-        exit;
+        AprovacaoEmprestimoService::rejeitar(
+            (int)$emprestimoId,
+            $motivo
+        );
+
+        $this->redirect("?rota=aprovacaoEmprestimo@index&grupo_id={$grupoId}");
     }
 }

@@ -2,169 +2,118 @@
 namespace Controllers;
 
 use Core\Controller;
-use Core\Sessao;
 use Core\Autenticacao;
 use Core\Permissao;
-use Models\Usuario;
-use Models\GrupoUsuario;
+use Services\UsuarioGrupoService;
+use Core\Sessao;
+use Exception;
 
+/**
+ * Controller responsável pela gestão de usuários do grupo
+ */
 class UsuarioGrupoController extends Controller
 {
-    /**
-     * Tela e processamento de cadastro de usuário no grupo
-     */
     public function criar()
     {
-        // 🔒 Garante que o usuário esteja logado
-        Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        // Grupo selecionado
-        $grupo_id = $_GET['grupo_id'] ?? null;
-
-        if (!$grupo_id) {
-            die('Grupo não informado.');
+        $grupoId = $_GET['grupo_id'] ?? null;
+        if (!$grupoId) {
+            $this->redirect('?rota=dashboard@index');
         }
 
-        // 🔒 Somente ADMIN pode cadastrar usuários
-        Permissao::admin($grupo_id);
+        Permissao::exigirAdmin((int)$grupoId);
 
-        // Se formulário foi enviado
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-            // Sanitização básica dos dados
-            $nome             = trim($_POST['nome']);
-            $email            = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
-            $telefone         = trim($_POST['telefone']);
-            $sexo             = $_POST['sexo'];
-            $nivel            = $_POST['nivel'];
-            $quantidade_cotas = (int) $_POST['quantidade_cotas'];
+            try {
+                UsuarioGrupoService::adicionarAoGrupo(
+                    (int)$grupoId,
+                    trim($_POST['nome']),
+                    filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL),
+                    trim($_POST['telefone']) ?: null,
+                    $_POST['sexo'] ?? 'O',
+                    $_POST['nivel'],
+                    (int)$_POST['quantidade_cotas']
+                );
 
-            if (!$nome || !$email || !$nivel) {
-                $erro = "Preencha os campos obrigatórios.";
-                $this->view('usuarios_grupo/criar', compact('erro', 'grupo_id'));
-                return;
-            }
+                $this->redirect("?rota=usuarioGrupo@index&grupo_id={$grupoId}");
 
-            // 🔍 Verifica se usuário já existe
-            $usuario = Usuario::buscarPorEmail($email);
-
-            if (!$usuario) {
-                // Criação de senha temporária
-                $senha_temporaria = password_hash('123456', PASSWORD_DEFAULT);
-
-                // Cria usuário
-                $usuario_id = Usuario::criar([
-                    ':nome' => $nome,
-                    ':email' => $email,
-                    ':senha' => $senha_temporaria,
-                    ':telefone' => $telefone,
-                    ':sexo' => $sexo
+            } catch (Exception $e) {
+                $this->view('usuarios_grupo/criar', [
+                    'erro'     => $e->getMessage(),
+                    'grupo_id' => $grupoId
                 ]);
-            } else {
-                $usuario_id = $usuario['id'];
             }
 
-            // Associa o usuário ao grupo
-            GrupoUsuario::adicionarUsuarioAoGrupo(
-                $usuario_id,
-                $grupo_id,
-                $nivel,
-                $quantidade_cotas
-            );
-
-            // Redireciona para o dashboard
-            header("Location: " . base_url("?rota=dashboard@index&grupo_id={$grupo_id}"));
-            exit;
+            return;
         }
 
-        // Exibe formulário
         $this->view('usuarios_grupo/criar', [
-            'grupo_id' => $grupo_id
+            'grupo_id' => $grupoId
         ]);
     }
 
     public function index()
     {
-        \Core\Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $grupo_id = $_GET['grupo_id'] ?? null;
-        if (!$grupo_id) {
-            die('Grupo não informado.');
+        $grupoId = $_GET['grupo_id'] ?? null;
+        if (!$grupoId) {
+            $this->redirect('?rota=dashboard@index');
         }
 
-        \Core\Permissao::admin($grupo_id);
+        Permissao::exigirAdmin((int)$grupoId);
 
-        // Paginação
-        $paginaAtual = (int)($_GET['page'] ?? 1);
-        $porPagina   = (int)($_GET['per_page'] ?? 10);
+        $pagina = (int)($_GET['page'] ?? 1);
+        $porPagina = (int)($_GET['per_page'] ?? 10);
 
-        // Total de registros
-        $total = \Models\GrupoUsuario::contarPorGrupo($grupo_id);
-
-        // Paginator
-        $paginator = new \Core\Paginator($total, $paginaAtual, $porPagina);
-
-        // Lista paginada
-        $usuarios = \Models\GrupoUsuario::listarPorGrupoPaginado(
-            $grupo_id,
-            $paginator->porPagina,
-            $paginator->offset
+        $resultado = UsuarioGrupoService::listar(
+            (int)$grupoId,
+            $pagina,
+            $porPagina
         );
 
         $this->view('usuarios_grupo/index', [
-            'usuarios'  => $usuarios,
-            'grupo_id'  => $grupo_id,
-            'paginator' => $paginator
+            'usuarios'  => $resultado['usuarios'],
+            'paginator' => $resultado['paginator'],
+            'grupo_id'  => $grupoId
         ]);
     }
 
     public function editar()
     {
-        \Core\Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
         $id = $_GET['id'] ?? null;
-        if (!$id) die('ID não informado.');
-
-        $registro = \Models\GrupoUsuario::buscarPorId($id);
-        if (!$registro) die('Registro não encontrado.');
-
-        // 🔒 Permissão: admin do grupo
-        \Core\Permissao::admin($registro['grupo_id']);
+        if (!$id) {
+            $this->redirect('?rota=dashboard@index');
+        }
 
         $this->view('usuarios_grupo/editar', [
-            'registro' => $registro
+            'registro' => \Models\GrupoUsuario::buscarPorId((int)$id)
         ]);
     }
 
     public function atualizar()
     {
-        \Core\Autenticacao::verificar();
+        Autenticacao::exigirLogin();
 
-        $id               = $_POST['id'];
-        $quantidade_cotas = (int) $_POST['quantidade_cotas'];
-        $nivel            = $_POST['nivel'];
-        $ativo            = isset($_POST['ativo']) ? 1 : 0;
+        try {
+            UsuarioGrupoService::atualizarVinculo(
+                (int)$_POST['id'],
+                (int)$_POST['quantidade_cotas'],
+                $_POST['nivel'],
+                isset($_POST['ativo'])
+            );
 
-        $registro = \Models\GrupoUsuario::buscarPorId($id);
-        if (!$registro) die('Registro não encontrado.');
+            $this->redirect('?rota=dashboard@index');
 
-        \Core\Permissao::admin($registro['grupo_id']);
-
-        // ❌ Não permitir que o admin se desative
-        if ($registro['usuario_id'] == \Core\Sessao::get('usuario_id') && (!$ativo || $nivel !== 'ADMIN')) {
-            die('Você não pode remover seu próprio acesso.');
+        } catch (Exception $e) {
+            $this->view('usuarios_grupo/editar', [
+                'erro' => $e->getMessage(),
+                'registro' => \Models\GrupoUsuario::buscarPorId((int)$_POST['id'])
+            ]);
         }
-
-        \Models\GrupoUsuario::atualizar($id, $quantidade_cotas, $nivel, $ativo);
-
-        \Services\LogService::registrar(
-            \Core\Sessao::get('usuario_id'),
-            'USUARIO_GRUPO',
-            "Atualizou usuário {$registro['usuario_id']} no grupo {$registro['grupo_id']}"
-        );
-
-        header('Location: ' . base_url("?rota=usuarioGrupo@index&grupo_id={$registro['grupo_id']}"));
-        exit;
     }
-
 }
