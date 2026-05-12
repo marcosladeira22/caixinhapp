@@ -23,6 +23,7 @@ class AuthService
 
         Sessao::set('usuario_id', $usuario['id']);
         Sessao::set('usuario_nome', $usuario['nome']);
+        session_regenerate_id(true);
     }
 
     /**

@@ -12,8 +12,27 @@ class App
      */
     public function executar(): void
     {
+
         // Inicia sessão global do sistema
         Sessao::iniciar();
+
+        $config = require __DIR__ . '/../../config/app.php';
+
+        // ✅ Controle de ambiente
+        if ($config['env'] === 'dev') {
+            ini_set('display_errors', 1);
+            error_reporting(E_ALL);
+        } else {
+            ini_set('display_errors', 0);
+            ini_set('log_errors', 1);
+        }
+
+        // ✅ Headers de segurança
+        header('X-Frame-Options: SAMEORIGIN');
+        header('X-Content-Type-Options: nosniff');
+        header('X-XSS-Protection: 1; mode=block');
+        header('Referrer-Policy: no-referrer-when-downgrade');
+        header("Content-Security-Policy: default-src 'self' https: data:; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net;");
 
         
         // ✅ Proteção CSRF global

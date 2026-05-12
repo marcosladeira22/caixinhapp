@@ -12,6 +12,17 @@ class Sessao
     public static function iniciar(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
+
+            
+            // ✅ Configurações seguras antes de iniciar
+            session_set_cookie_params([
+                'lifetime' => 0,
+                'path'     => '/',
+                'secure'   => isset($_SERVER['HTTPS']),
+                'httponly' => true,
+                'samesite' => 'Strict'
+            ]);
+
             session_start();
         }
     }
@@ -68,7 +79,7 @@ class Sessao
                     $params['httponly']
                 );
             }
-
+            session_regenerate_id(true);
             session_destroy();
         }
     }
