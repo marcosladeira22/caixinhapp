@@ -36,6 +36,7 @@ class FechamentoController extends Controller
      */
     public function fechar()
     {
+        $this->exigirPost();
         Autenticacao::exigirLogin();
 
         $grupoId = $_POST['grupo_id'] ?? null;

@@ -41,6 +41,7 @@ class AprovacaoEmprestimoController extends Controller
      */
     public function aprovar()
     {
+        $this->exigirPost();
         Autenticacao::exigirLogin();
 
         $emprestimoId = $_POST['emprestimo_id'] ?? null;
@@ -62,6 +63,7 @@ class AprovacaoEmprestimoController extends Controller
      */
     public function rejeitar()
     {
+        $this->exigirPost();
         Autenticacao::exigirLogin();
 
         $emprestimoId = $_POST['emprestimo_id'] ?? null;

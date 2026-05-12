@@ -52,6 +52,7 @@ class PagamentoController extends Controller
      */
     public function pagar()
     {
+        $this->exigirPost();
         Autenticacao::exigirLogin();
 
         $grupoId   = $_POST['grupo_id']   ?? null;

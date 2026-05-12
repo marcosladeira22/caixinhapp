@@ -40,6 +40,7 @@ class UsuarioController extends Controller
      */
     public function atualizar()
     {
+        $this->exigirPost();
         Autenticacao::exigirLogin();
 
         try {

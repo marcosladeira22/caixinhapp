@@ -74,4 +74,26 @@ abstract class Controller
         http_response_code($statusCode);
         echo $mensagem;
     }
+
+    /**
+     * Garante que a requisição é POST
+     */
+    protected function exigirPost(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Método não permitido.';
+        }
+    }
+
+    /**
+     * Garante que a requisição é GET
+     */
+    protected function exigirGet(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            echo 'Método não permitido.';
+        }
+    }
 }
