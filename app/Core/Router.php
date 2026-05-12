@@ -24,7 +24,7 @@ class Router
         [$controller, $metodo] = explode('@', $rota, 2);
 
         // Normaliza controller
-        $controller = ucfirst(strtolower($controller)) . 'Controller';
+        $controller = ucfirst($controller) . 'Controller';
         $classe = "Controllers\\{$controller}";
 
         // Verifica se a classe existe

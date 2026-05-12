@@ -19,7 +19,7 @@ class Permissao
             return false;
         }
 
-        $nivel = GrupoUsuario::nivelUsuarioNoGrupo($usuario_id, $grupo_id);
+        $nivel = GrupoUsuario::nivelNoGrupo($usuario_id, $grupo_id);
 
         return $nivel === 'ADMIN';
     }
