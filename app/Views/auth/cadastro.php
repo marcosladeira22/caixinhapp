@@ -18,7 +18,7 @@
                 <?php endif; ?>
 
                 <form method="post">
-                    
+                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                     <div class="mb-2">
                         <label for="" class="form-label">Nome</label>
                         <input type="text" name="nome" class="form-control" placeholder="Nome completo" required>

@@ -30,13 +30,27 @@ abstract class Controller
             return;
         }
 
-        // Isola dados da view (sem extract indiscriminado)
-        $dadosView = $dados;
+        
+        // ✅ INJETAR CSRF junto com os dados da view
+        $dadosView = array_merge($dados, [
+            'csrfToken' => \Core\Csrf::gerarToken()
+        ]);
+
+
+            
+        // ✅ Extrair para a view corretamente
+        extract($dadosView);
 
         // Captura conteúdo da view
         ob_start();
+
         require $viewPath;
         $conteudo = ob_get_clean();
+
+        
+        // ✅ MUITO IMPORTANTE → disponibiliza para o layout também
+        extract($dadosView);
+
 
         // Renderiza layout
         require $layoutPath;
