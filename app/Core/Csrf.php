@@ -8,11 +8,14 @@ class Csrf
      */
     public static function gerarToken(): string
     {
-        if (!Sessao::has('_csrf_token')) {
-            Sessao::set('_csrf_token', bin2hex(random_bytes(32)));
+        $token = Sessao::get('_csrf_token');
+
+        if (!$token) {
+            $token = bin2hex(random_bytes(32));
+            Sessao::set('_csrf_token', $token);
         }
 
-        return Sessao::get('_csrf_token');
+        return $token;
     }
 
     /**

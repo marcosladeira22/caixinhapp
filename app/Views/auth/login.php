@@ -17,6 +17,7 @@
                 <?php endif; ?>
 
                 <form method="post">
+                    <input type="hidden" name="_token" value="<?= \Core\Csrf::gerarToken() ?>">
                     <input type="email" name="email" class="form-control mb-3" placeholder="E-mail" required>
                     <input type="password" name="senha" class="form-control mb-3" placeholder="Senha" required>
                     <button class="btn btn-primary w-100">Entrar</button>

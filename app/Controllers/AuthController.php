@@ -16,7 +16,6 @@ class AuthController extends Controller
      */
     public function login()
     {
-        $this->exigirPost();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
