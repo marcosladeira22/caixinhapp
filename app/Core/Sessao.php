@@ -83,4 +83,21 @@ class Sessao
             session_destroy();
         }
     }
+
+    public static function flash(string $chave, string $mensagem): void
+    {
+        $_SESSION['_flash'][$chave] = $mensagem;
+    }
+
+    public static function getFlash(string $chave): ?string
+    {
+        if (!isset($_SESSION['_flash'][$chave])) {
+            return null;
+        }
+
+        $mensagem = $_SESSION['_flash'][$chave];
+        unset($_SESSION['_flash'][$chave]);
+
+        return $mensagem;
+    }
 }

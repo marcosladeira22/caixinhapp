@@ -1,14 +1,56 @@
+<div class="container mt-4">
 
-<h3>Selecione um Grupo</h3>
+    <div class="card shadow">
+        <div class="card-body">
 
-<ul class="list-group mt-3">
-    <?php foreach ($grupos as $grupo): ?>
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            <?= htmlspecialchars($grupo['nome']) ?>
+            <h4 class="fw-bold mb-4">
+                Selecione um grupo
+            </h4>
 
-            <a href="<?= base_url("?rota=dashboard@grupo&grupo_id={$grupo['id']}") ?>"class="btn btn-primary btn-sm">
-                Entrar
-            </a>
-        </li>
-    <?php endforeach; ?>
-</ul>
+            <?php require __DIR__ . '/../components/alert.php'; ?>
+
+            <?php if (!empty($grupos)): ?>
+
+                <div class="list-group">
+
+                    <?php foreach ($grupos as $grupo): ?>
+
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <strong><?= htmlspecialchars($grupo['nome']) ?></strong>
+                            </div>
+
+                            <a 
+                                href="<?= base_url("?rota=dashboard@grupo&grupo_id={$grupo['id']}") ?>"
+                                class="btn btn-primary btn-sm"
+                            >
+                                Entrar
+                            </a>
+
+                        </div>
+
+                    <?php endforeach; ?>
+
+                </div>
+
+            <?php else: ?>
+
+                <!-- ✅ EMPTY STATE -->
+                <div class="text-center p-5">
+                    <h5 class="text-muted">Você ainda não participa de nenhum grupo</h5>
+
+                    <a 
+                        href="<?= base_url('?rota=grupo@criar') ?>"
+                        class="btn btn-success mt-3"
+                    >
+                        Criar meu primeiro grupo
+                    </a>
+                </div>
+
+            <?php endif; ?>
+
+        </div>
+    </div>
+
+</div>

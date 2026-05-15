@@ -37,9 +37,10 @@ abstract class Controller
         ]);
 
 
-            
-        // ✅ Extrair para a view corretamente
-        extract($dadosView);
+        // ✅ expõe para a VIEW
+        foreach ($dadosView as $key => $value) {
+            $$key = $value;
+        }
 
         // Captura conteúdo da view
         ob_start();
@@ -48,9 +49,11 @@ abstract class Controller
         $conteudo = ob_get_clean();
 
         
-        // ✅ MUITO IMPORTANTE → disponibiliza para o layout também
-        extract($dadosView);
-
+        
+        // ✅ expõe para o LAYOUT também
+        foreach ($dadosView as $key => $value) {
+            $$key = $value;
+        }
 
         // Renderiza layout
         require $layoutPath;
